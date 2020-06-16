@@ -1,2 +1,2 @@
 # mBLA_UF
-This scripts are providing the calculation of new matched asymptotic solution for crossflow ultrafiltration, especially with concentration-polarization layer. The manuscript is in preparation, and sourcode will soon be updated in this repository.
+This scripts are providing the calculation of matched asymptotic solution of the concentration-polarization layer in the cross-flow ultrafiltration. The manuscript is soon to be submitted, and once it is published, the inter-links and instructions of scripts will be added in this dataset repository.
