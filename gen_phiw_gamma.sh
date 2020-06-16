@@ -27,7 +27,7 @@ do
 	fn_inp='inp_g'${gname}'_DTP'${DTP}'.py'	
 	fn_out='phiw_g'${gname}'_DTP'${DTP}'.dat'
 	awk '{ if ($1 == "ref_DTP") $3="'${DTP}'"; print $0 }' ${out_path}/${fn_inp_gref} > ${out_path}/${fn_inp}
-	python ../scripts/cal_phiw_from_input.py ${out_path}/${fn_inp} ${out_path}/${fn_out}
+	python /scripts/cal_phiw_from_input.py ${out_path}/${fn_inp} ${out_path}/${fn_out}
 	python plot_analysis.py ${out_path}/${fn_out} ${out_path}/analysis/${fn_out}.pdf
     done
 done
