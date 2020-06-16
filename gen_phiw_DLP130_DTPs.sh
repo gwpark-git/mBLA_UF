@@ -22,7 +22,7 @@ DTP=130
 fn_inp='inp_'${fn_base}${DTP}'.py'
 fn_out='phiw_'${fn_base}${DTP}'.dat'
 awk '{ if ($1 == "ref_DTP") $3="'${DTP}'"; print $0 }' ${fn_inp_ref} > data/${fn_inp}
-python ../scripts/cal_phiw_from_input.py data/${fn_inp} data/${fn_out}
+python scripts/cal_phiw_from_input.py data/${fn_inp} data/${fn_out}
 python plot_analysis.py data/${fn_out} data/analysis/${fn_out}.pdf
 
 # automatically testing with different DTP
@@ -32,7 +32,7 @@ do
     fn_inp='inp_'${fn_base}${DTP}'.py'
     fn_out='phiw_'${fn_base}${DTP}'.dat'
     awk '{ if ($1 == "ref_DTP") $3="'${DTP}'"; print $0 }' ${fn_inp_ref} > data/${fn_inp}
-    python ../scripts/cal_phiw_from_input.py data/${fn_inp} data/${fn_out}
+    python scripts/cal_phiw_from_input.py data/${fn_inp} data/${fn_out}
     python plot_analysis.py data/${fn_out} data/analysis/${fn_out}.pdf    
 done
 
