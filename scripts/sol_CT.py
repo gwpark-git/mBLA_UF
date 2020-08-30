@@ -39,7 +39,7 @@ def get_Gk_CT(k, dz, Pi_arr, L):
     # gp1 = get_gpm(0, dz, +1.0, INT_Pi, k, L)
     # gm1 = get_gpm(0, dz, -1.0, INT_Pi, k, L)
     
-    print 'Gp(L), Gm(L) = ', gp1, gm1
+    print ('Gp(L), Gm(L) = ', gp1, gm1)
     # return (gm1 * exp(k) + gp1 * exp(-k)) * k/(4.*sinh(k))
     return (gm1 * exp(k) + gp1 * exp(-k)) * k/(4.*sinh(k))
 
@@ -70,10 +70,10 @@ def get_cond_CT(cond_BT, a_colloid, V_a, kT, dz, Pi_arr):
     re['kT']=kT
     re['dz'] = dz
     re['Gk'] = get_Gk_CT(re['k'], re['dz'], Pi_arr, re['L'])
-    print 'Gk = ', re['Gk']
+    print ('Gk = ', re['Gk'])
     re['Cp_CT'] = get_Cpm_CT(re['k'], +1.0, re['Pin'], re['Pout'], re['Pper'], re['dz'], Pi_arr, re['L'], re['Gk'])
     re['Cm_CT'] = get_Cpm_CT(re['k'], -1.0, re['Pin'], re['Pout'], re['Pper'], re['dz'], Pi_arr, re['L'], re['Gk'])
-    print 'Cp_CT, Cm_CT : ', re['Cp_CT'], re['Cm_CT']
+    print ('Cp_CT, Cm_CT : ', re['Cp_CT'], re['Cm_CT'])
     return re
 
 # def get_cond_CT_backward(cond_BT, a_colloid, V_a, kT, dz, INT_Pi):

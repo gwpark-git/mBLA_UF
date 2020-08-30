@@ -10,10 +10,10 @@ from numpy import *
 import sys
 
 if len(sys.argv)<3:
-    print 'Usage of generating Q_perm and Q_in in SPHS with given gamma'
-    print 'argv[1] == gamma'
-    print 'argv[2] == output filename'
-    print 'argv[3] == ref.py'
+    print ('Usage of generating Q_perm and Q_in in SPHS with given gamma')
+    print ('argv[1] == gamma')
+    print ('argv[2] == output filename')
+    print ('argv[3] == ref.py')
 else:
 
     gamma = float(sys.argv[1])
@@ -22,7 +22,7 @@ else:
         fn_ref = str(sys.argv[3])
     else:
         fn_ref = 'ref.py'
-    print 'given arguments: ', gamma, fn_out, fn_ref
+    print ('given arguments: ', gamma, fn_out, fn_ref)
     
     from scipy.stats import linregress
 
@@ -129,7 +129,7 @@ else:
             execfile(path_codes+fn_ref)
 
             # pre condition generation
-            print k, prefactor_U
+            print (k, prefactor_U)
 
             ref_Pout = 101325 #Pa
 
@@ -138,13 +138,13 @@ else:
             Pper = get_Pper(DLP, ref_DTP, k, ref_Pout)
             #dz = L_channel/1000.
 
-            print '\nSummary:' 
-            print Pin
-            print Pper
-            print ref_Pout
+            print ('\nSummary:' )
+            print (Pin)
+            print (Pper)
+            print (ref_Pout)
 
             cond_BT = get_cond(pre_cond, Pin, ref_Pout, Pper)
-            print cond_BT
+            print (cond_BT)
             #cond_CT = get_cond_CT(cond_BT, a_particle, Va, kT, dz, INT_Pi_BLA)
 
             # parameter related with sol_CT
@@ -153,7 +153,7 @@ else:
             DTP_HP = (1/2.)*(Pin + ref_Pout) - Pper
             vw0 = cond_BT['Lp']*DTP_HP
             epsilon_d = D0/(cond_BT['R']*vw0)
-            print epsilon_d, vw0
+            print (epsilon_d, vw0)
 
             # parameters related with sol_GT
             phi_bulk = 1e-3
@@ -183,7 +183,7 @@ else:
             N_iter = 100
             for n in range(N_iter):
                 phiw_set_1 = copy.deepcopy(phiw_set_2)
-                print 'n=%d, phiw(n-1)(0)=%4.3f, phiw(n-1)(L)=%4.3f, k_new=%4.3f'%(n, phiw_set_1[0], phiw_set_1[-1], k_new)
+                print ('n=%d, phiw(n-1)(0)=%4.3f, phiw(n-1)(L)=%4.3f, k_new=%4.3f'%(n, phiw_set_1[0], phiw_set_1[-1], k_new))
                 phiw_rec.append(1.*phiw_set_1)    
                 INT_phiw = interp1d(z_arr, phiw_set_1, fill_value='extrapolate')
                 INT_Pi = interp1d(z_arr, get_Pi(phiw_set_1, Va, kT), fill_value='extrapolate')
@@ -191,7 +191,7 @@ else:
                 cond_GT = get_cond_GT(cond_CT, phi_bulk, epsilon_d, dr, dz, cond_GT['gamma'])
                 phiw_set_2= get_new_phiw_arr(cond_GT, INT_phiw, INT_Pi, fcn_Dc_given, fcn_eta_given, z_arr, phiw_set_1, weight)
 
-                print
+                print()
             vw_SPHS_arr = get_vw_arr(cond_GT, INT_Pi, INT_phiw, z_arr)
             umax_SPHS_arr = get_umax_arr(cond_GT, INT_Pi, INT_phiw, fcn_Dc_given, fcn_eta_given, z_arr)
 

@@ -84,26 +84,27 @@ def gen_analysis(z_arr, yt_arr, phiw_arr, cond_GT, fcn_Pi, fcn_Dc, fcn_eta, fn_o
             Phi_z += 0.5 * dy * (phi_arr[j] * u2 * (1. - yt_arr[j]) + phi_arr[j-1]*u1*(1. - yt_arr[j-1]))
         Phi_z *= 2. * pi * u0 * cond_GT['R']**2.0
         re[i, 9] = Phi_z
-        if i <> 0:
+        if i != 0:
             re[i, 10] = get_delta_z(yt_arr, vw_div_vw0, cond_GT['epsilon_d'], ID_arr, cond_GT['phi_bulk'], re[i, 1])
     savetxt(fn_out, re)
     return 0
             
 
 if len(sys.argv) < 3:
-    print 'Usage: '
-    print 'argv[1] == input file as Python script'
-    print 'argv[2] == output file name'
+    print ('Usage: ')
+    print ('argv[1] == input file as Python script')
+    print ('argv[2] == output file name')
 else:
 
     
     fn_inp = str(sys.argv[1])
     fn_out = str(sys.argv[2])
-    print 'Arguments: ', fn_inp, fn_out
+    print ('Arguments: ', fn_inp, fn_out)
 
     # system properties
     
-    execfile(fn_inp)
+    # execfile(fn_inp)
+    exec(open(fn_inp).read())
     z_arr = linspace(0, L_channel, Nz)
     dz = z_arr[1] - z_arr[0]
     dr = (1/float(Nr))*R_channel
@@ -120,17 +121,17 @@ else:
     prefactor_U = sqrt(Lp*R_channel/eta0)
 
     # pre condition generation
-    print 'k, prefactor_U :', k, prefactor_U
+    print ('k, prefactor_U :', k, prefactor_U)
 
     Pin = get_Pin(DLP, ref_Pout)
     Pper = get_Pper(DLP, ref_DTP, k, ref_Pout)
 
-    print '\nSummary:' 
-    print 'Pin, Pper, ref_Pout :', Pin, Pper, ref_Pout
+    print ('\nSummary:' )
+    print ('Pin, Pper, ref_Pout :', Pin, Pper, ref_Pout)
 
     # pre-conditioning
     pre_cond = {'k':k, 'R':R_channel, 'L':L_channel, 'Lp':Lp, 'eta0':eta0, 'preU':prefactor_U}
-    print pre_cond
+    print (pre_cond)
 
     cond_BT = get_cond(pre_cond, Pin, ref_Pout, Pper)
     # print cond_BT
@@ -139,7 +140,7 @@ else:
     #vw_dim = cond_BT['Lp']*DLP
     vw0 = cond_BT['Lp']*DTP_HP
     epsilon_d = D0/(cond_BT['R']*vw0)
-    print epsilon_d, vw0
+    print (epsilon_d, vw0)
 
     # parameters related with sol_GT
     epsilon_d = D0/(R_channel*vw0)
@@ -175,8 +176,8 @@ else:
     yt_arr = gen_yt_arr(cond_GT)
     Ny = size(yt_arr)
     if IDENT_verbose:
-        print '  IDENT_verbose is turned on, which will record the analysis of result for every FPI steps'
-        print '                The current IDENT_verbose option is not parallelized, which takes longer time for computation'
+        print ('  IDENT_verbose is turned on, which will record the analysis of result for every FPI steps')
+        print ('                The current IDENT_verbose option is not parallelized, which takes longer time for computation')
         fn_ver = fn_out + '.%05d'%(0)
         gen_analysis(z_arr, yt_arr, phiw_set_1*phi_b, cond_GT, fcn_Pi_given, fcn_Dc_given, fcn_eta_given, fn_ver)
         
@@ -196,10 +197,10 @@ else:
             gen_analysis(z_arr, yt_arr, phiw_set_2*phi_b, cond_GT, fcn_Pi_given, fcn_Dc_given, fcn_eta_given, fn_ver)
             
         ind_max = argmax(phiw_set_2)
-        print 'n=%d, phiw/b(0)=%4.0f, phiw/b(L)=%4.0f, max:(phiw(%4.3f)/b)=%4.0f'%(n, phiw_set_2[0], phiw_set_2[-1], z_arr[ind_max], phiw_set_2[ind_max])
+        print ('n=%d, phiw/b(0)=%4.0f, phiw/b(L)=%4.0f, max:(phiw(%4.3f)/b)=%4.0f'%(n, phiw_set_2[0], phiw_set_2[-1], z_arr[ind_max], phiw_set_2[ind_max]))
 
         err = norm(phiw_set_1 - phiw_set_2)
-        print 'norm(p1-p2) : %4.3e, weight : %4.3f\n'%(err, weight)
+        print ('norm(p1-p2) : %4.3e, weight : %4.3f\n'%(err, weight))
 
     # Constructing the results and its analysis
     gen_analysis(z_arr, yt_arr, phiw_set_2*phi_b, cond_GT, fcn_Pi_given, fcn_Dc_given, fcn_eta_given, fn_out)

@@ -291,7 +291,7 @@ def get_int_D_phi(z, cond_GT, Pi_arr, fcn_D, yt_arr, phi_arr, ID_arr):
 
 def get_F1(z, cond_GT, Pi_arr, fcn_D, fcn_eta, uZz, vw_div_vw0, yt_arr, phi_arr, Ieta_arr, ID_arr):
     # for a convenience, we replace the dimensionless coordination from r to y = 1-r
-
+    
     R = cond_GT['R']; L = cond_GT['L']
 
     ed = cond_GT['epsilon_d']
@@ -392,7 +392,7 @@ def get_f_modi_RK(yt, dyt, f, df, int_INV_D_pre, vw_div_vw0, fcn_D, cond_GT):
     y_new = yt + dyt
     f_new = f + df
     int_INV_D = int_INV_D_pre
-    if df <> 0.: # it is related with half-step for RK4 method
+    if df != 0.: # it is related with half-step for RK4 method
         int_INV_D += (dyt/2.)*(1./fcn_D(f, cond_GT) + 1./fcn_D(f_new, cond_GT))
     return (-1./ed)*(vw_div_vw0/fcn_D(f_new, cond_GT))*(f_new - phi_b*(1. - exp(-(vw_div_vw0/ed)*int_INV_D)))
     # return (-1./ed)*(vw_div_vw0/fcn_D(f, cond_GT))*(f - phi_b*(1. - exp(-(vw_div_vw0/eb)*int_INV_D)))

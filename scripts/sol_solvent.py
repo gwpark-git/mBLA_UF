@@ -17,12 +17,12 @@ def get_cond(pre_cond, Pin, Pout, Pper):
     DTP = DTP_HP*2.*tanh(k/2.)/k
     vw0 = pre_cond['Lp']*DTP_HP
     
-    print 'Pin, Pout, Pper in Pa : ', Pin, Pout, Pper
-    print 'DLP, DTP, DTP_HP in Pa : ', DLP, DTP, DTP_HP
+    print ('Pin, Pout, Pper in Pa : ', Pin, Pout, Pper)
+    print ('DLP, DTP, DTP_HP in Pa : ', DLP, DTP, DTP_HP)
     
     Cp = get_Cpm(k, +1.0, Pin, Pout, Pper)
     Cm = get_Cpm(k, -1.0, Pin, Pout, Pper)
-    print 'Cp, Cm : ', Cp, Cm
+    print ('Cp, Cm : ', Cp, Cm)
     cond = {'k':pre_cond['k'], 'Cp':Cp, 'Cm':Cm, 'Pin':Pin, 'Pout':Pout, 'Pper':Pper,\
            'R':pre_cond['R'], 'L':pre_cond['L'], 'Lp':pre_cond['Lp'], 'eta0':pre_cond['eta0'],
             'preU':pre_cond['preU'], 'vw0':vw0}    
