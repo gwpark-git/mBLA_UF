@@ -8,19 +8,40 @@
 
 from numpy import *
 
-# generation condition structure with the given system condition
-def get_cond(pre_cond, Pin, Pout, Pper):
-    k = pre_cond['k']
+
+def get_cond(pre_cond, Pin, Pout, Pper): # conditions for pure solvent flow
+    """ return dictionary "cond" of conditions for pure solvent flow (Sec. IV A)
+    dictionary "cond":
+    inherite from dictionary "pre_cond" argument described below.
+    'Cp' : [WIP]
     
-    DLP = Pin - Pout
-    DTP_HP = (1/2.)*(Pin + Pout) - Pper
-    DTP = DTP_HP*2.*tanh(k/2.)/k
-    vw0 = pre_cond['Lp']*DTP_HP
+    Arguments:
+        pre_cond = {'k':k, 'R':R_channel, 'L':L_channel, 'Lp':Lp, 'eta0':eta0, 'preU':prefactor_U}
+            'k'    : system parameter k in Eq. (26)   in the dimensionless unit
+            'R'    : radius of membrane channel       in the unit of m
+            'Lp'   : solvent permeability on the clean membrane in Eqs. (12) and (13) 
+                                                      in the unit of m/(Pa sec)
+            'eta0' : pure solvent viscosity at the operating temperature 
+                                                      in the unit of Pa sec
+            'preU' : auxiliary conversion factor sqrt(Lp*R/eta0) bet. dimensionless quantities  
+                                                      in the dimensionless unit
+        Pin      = Pressure inlet boundary condition  in the unit of Pa
+        Pout     = Pressure outlet boundary condition in the unit of Pa
+        Pper     = Pressure in permeate which affect to Darcy-Starling law in Eq. (12) 
+                                                      in the unit of Pa
+    
+    """
+    k = pre_cond['k'] # dimensionless value for k (Eq. 26)
+    
+    DLP = Pin - Pout # Longitudinal pressure difference
+    DTP_HP = (1/2.)*(Pin + Pout) - Pper # Length-averaged TMP with linear pressure approximation
+    DTP = DTP_HP*2.*tanh(k/2.)/k # Length-averaged TMP
+    vw0 = pre_cond['Lp']*DTP_HP # v^\ast
     
     print ('Pin, Pout, Pper in Pa : ', Pin, Pout, Pper)
     print ('DLP, DTP, DTP_HP in Pa : ', DLP, DTP, DTP_HP)
     
-    Cp = get_Cpm(k, +1.0, Pin, Pout, Pper)
+    Cp = get_Cpm(k, +1.0, Pin, Pout, Pper) 
     Cm = get_Cpm(k, -1.0, Pin, Pout, Pper)
     print ('Cp, Cm : ', Cp, Cm)
     cond = {'k':pre_cond['k'], 'Cp':Cp, 'Cm':Cm, 'Pin':Pin, 'Pout':Pout, 'Pper':Pper,\
