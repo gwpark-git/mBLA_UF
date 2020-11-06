@@ -76,27 +76,28 @@ else:
     pre_cond = {'k':k, 'R':R_channel, 'L':L_channel, 'Lp':Lp, 'eta0':eta0, 'preU':prefactor_U}
     print (pre_cond)
 
-    cond_BT = get_cond(pre_cond, Pin, ref_Pout, Pper)                  # allocating Blank Test (pure test) conditions
+    cond_PS = get_cond(pre_cond, Pin, ref_Pout, Pper)                  # allocating Blank Test (pure test) conditions
 
     DTP_HP = (1/2.)*(Pin + ref_Pout) - Pper                            # length-averaged TMP with a linearly declined pressure approximation
-    vw0 = cond_BT['Lp']*DTP_HP                                         # v^\ast
-    epsilon_d = D0/(cond_BT['R']*vw0)                                  # 1/Pe_R
+    vw0 = cond_PS['Lp']*DTP_HP                                         # v^\ast
+    epsilon_d = D0/(cond_PS['R']*vw0)                                  # 1/Pe_R
     print (epsilon_d, vw0)
 
-    if IDENT_parallel:                                                 # parallel computation
-        if IDENT_modification:
-            phiw_update = get_new_phiw_div_phib_modi_arr_parallel
-        else:
-            phiw_update = get_new_phiw_div_phib_arr_parallel
-    else:                                                              # single-process computation
-        if IDENT_modification:
-            phiw_update = get_new_phiw_div_phib_modi_arr
-        else:
-            phiw_update = get_new_phiw_div_phib_arr
+    # if IDENT_parallel:                                                 # parallel computation
+    #     if IDENT_modification:
+    #         phiw_update = get_new_phiw_div_phib_modi_arr_parallel
+    #     else:
+    #         phiw_update = get_new_phiw_div_phib_arr_parallel
+    # else:                                                              # single-process computation
+    #     if IDENT_modification:
+    #         phiw_update = get_new_phiw_div_phib_modi_arr
+    #     else:
+    #         phiw_update = get_new_phiw_div_phib_arr
+    phiw_update = gen_new_phiw_div_phib_arr
 
     Pi_arr = zeros(size(phiw_arr))                                     # calculating osmotic pressure using initial conditions
             
-    cond_CT = get_cond_CT(cond_BT, a_particle, Va, kT, dz, Pi_arr)     # allocating conditions for the constant transport properties
+    cond_CT = get_cond_CT(cond_PS, a_particle, Va, kT, dz, Pi_arr)     # allocating conditions for the constant transport properties
     cond_GT = get_cond_GT(cond_CT, phi_bulk, epsilon_d, dr, dz, gamma) # allocating conditions for the general transport properties
 
     
@@ -119,18 +120,21 @@ else:
     for n in range(N_iter):                                                           # main iterator with number n
         phiw_set_1 = deepcopy(phiw_set_2)                                             # reduced wall concentration inherited from the previous iteration
         Pi_arr = fcn_Pi_given(phiw_set_1*phi_b, cond_GT)                              # calculating osmotic pressure for the given phiw
+        Pi_div_DLP_arr = deepcopy(Pi_arr)/cond_GT['DLP']
         for i in range(Nz):                                                           # generating g+(z) and g-(z) functions
-            gp_arr[i] = get_gpm(z_arr[i], dz, +1.0, Pi_arr, k, cond_BT['L'])
-            gm_arr[i] = get_gpm(z_arr[i], dz, -1.0, Pi_arr, k, cond_BT['L'])
-        cond_CT = get_cond_CT(cond_BT, a_particle, Va, kT, dz, Pi_arr)                # update conditions for CT
+            gp_arr[i] = get_gpm(z_arr[i], dz, +1.0, Pi_arr, k, cond_PS['L'])
+            gm_arr[i] = get_gpm(z_arr[i], dz, -1.0, Pi_arr, k, cond_PS['L'])
+        cond_CT = get_cond_CT(cond_PS, a_particle, Va, kT, dz, Pi_arr)                # update conditions for CT
         cond_GT = get_cond_GT(cond_CT, phi_bulk, epsilon_d, dr, dz, cond_GT['gamma']) # update conditions for GT
         cond_GT['k'] = cond_GT['k'] * eta_div_eta0_SPHS(phi_b, cond_GT)               # update the dimensionless value k
 
-        phiw_set_2= phiw_update(cond_GT, Pi_arr, fcn_Dc_given, fcn_eta_given, \       # main FPI iterator
-                                z_arr, phiw_set_1, weight, gp_arr, gm_arr, yt_arr)
-        if IDENT_verbose:                                                             # the case when each steps will be printed out
-            fn_ver = fn_out + '.%05d'%(n + 1)
-            gen_analysis(z_arr, yt_arr, phiw_set_2*phi_b, cond_GT, fcn_Pi_given, fcn_Dc_given, fcn_eta_given, fn_ver)
+        # phiw_set_2= phiw_update(cond_GT, Pi_arr, fcn_Dc_given, fcn_eta_given,\
+        #                         z_arr, phiw_set_1, weight, gp_arr, gm_arr, yt_arr)    # main FPI iterator
+        phiw_update(phiw_set_2, cond_GT, fcn_Dc_given, fcn_eta_given, z_div_L_arr, phiw_set_1, Pi_div_DLP_arr, cond_GT['weight'], gp_arr, gm_arr, y_div_R_arr)
+        
+        # if IDENT_verbose:                                                             # the case when each steps will be printed out
+        #     fn_ver = fn_out + '.%05d'%(n + 1)
+        #     gen_analysis(z_arr, yt_arr, phiw_set_2*phi_b, cond_GT, fcn_Pi_given, fcn_Dc_given, fcn_eta_given, fn_ver)
             
         ind_max = argmax(phiw_set_2)                                                  # get index number for the maximum values of phiw(z)
         print ('n=%d, phiw/b(0)=%4.0f, phiw/b(L)=%4.0f, max:(phiw(%4.3f)/b)=%4.0f'%(n, phiw_set_2[0], phiw_set_2[-1], z_arr[ind_max], phiw_set_2[ind_max]))

@@ -143,16 +143,16 @@ else:
             print (Pper)
             print (ref_Pout)
 
-            cond_BT = get_cond(pre_cond, Pin, ref_Pout, Pper)
-            print (cond_BT)
-            #cond_CT = get_cond_CT(cond_BT, a_particle, Va, kT, dz, INT_Pi_BLA)
+            cond_PS = get_cond(pre_cond, Pin, ref_Pout, Pper)
+            print (cond_PS)
+            #cond_CT = get_cond_CT(cond_PS, a_particle, Va, kT, dz, INT_Pi_BLA)
 
             # parameter related with sol_CT
 
-            D0 = kT/(6.*pi*cond_BT['eta0']*a_particle)
+            D0 = kT/(6.*pi*cond_PS['eta0']*a_particle)
             DTP_HP = (1/2.)*(Pin + ref_Pout) - Pper
-            vw0 = cond_BT['Lp']*DTP_HP
-            epsilon_d = D0/(cond_BT['R']*vw0)
+            vw0 = cond_PS['Lp']*DTP_HP
+            epsilon_d = D0/(cond_PS['R']*vw0)
             print (epsilon_d, vw0)
 
             # parameters related with sol_GT
@@ -169,7 +169,7 @@ else:
             INT_phiw = interp1d(z_arr, phiw_arr)
             INT_Pi = interp1d(z_arr, Pi_arr)
 
-            cond_CT = get_cond_CT(cond_BT, a_particle, Va, kT, dz, INT_Pi)
+            cond_CT = get_cond_CT(cond_PS, a_particle, Va, kT, dz, INT_Pi)
             cond_GT = get_cond_GT(cond_CT, phi_bulk, epsilon_d, dr, dz, gamma)
             import copy
             phi_b= cond_GT['phi_bulk']
@@ -187,7 +187,7 @@ else:
                 phiw_rec.append(1.*phiw_set_1)    
                 INT_phiw = interp1d(z_arr, phiw_set_1, fill_value='extrapolate')
                 INT_Pi = interp1d(z_arr, get_Pi(phiw_set_1, Va, kT), fill_value='extrapolate')
-                cond_CT = get_cond_CT(cond_BT, a_particle, Va, kT, dz, INT_Pi)
+                cond_CT = get_cond_CT(cond_PS, a_particle, Va, kT, dz, INT_Pi)
                 cond_GT = get_cond_GT(cond_CT, phi_bulk, epsilon_d, dr, dz, cond_GT['gamma'])
                 phiw_set_2= get_new_phiw_arr(cond_GT, INT_phiw, INT_Pi, fcn_Dc_given, fcn_eta_given, z_arr, phiw_set_1, weight)
 

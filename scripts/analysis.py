@@ -26,7 +26,7 @@ def get_psi(s_bar, phi_b, phi_w):
         psi = particle distribution function along y in Eq. (55)
             : get_psi(s_bar(y_bar, z), phi_b, phi_w(z)) = psi(y_bar, z)
 
-    Arguments:
+    Parameters:
         s_bar = important exponent described in Eq. (43)
         phi_b = particle volume fraction in bulk/feed 
         phi_w = particle wall volume fraction 
@@ -71,7 +71,7 @@ def gen_analysis(z_arr, yt_arr, phiw_arr, cond_GT, fcn_Pi, fcn_Dc_given, fcn_eta
         re[8] = u(r=0, z)/u^\ast in the dimensionless unit
         re[9] = Phi(z)           in the unit of m^3/sec
     
-    Arguments:
+    Parameters:
         z_arr              = arrays for discretized z (m)
         yt_arr             = arrays for discretized y (dimensionless).
                              works as auxiliary function to calculate some functions <- check

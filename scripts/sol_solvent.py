@@ -1,4 +1,8 @@
 #############################################################################
+#   Flow profile of pure solvent flow in CF UF                              #
+#   This is the solution of pure solvent flow described in Sec. IV A        #
+#   of the paper described below.                                           #
+#                                                                           #
 #   Modeling cross-flow ultrafiltration of permeable particles dispersions  #
 #   Paper authors: Park, Gun Woo and Naegele, Gerhard                       #
 #   Developer: Park, Gun Woo                                                #
@@ -12,10 +16,10 @@ from numpy import *
 def get_cond(pre_cond, Pin, Pout, Pper): # conditions for pure solvent flow
     """ return dictionary "cond" of conditions for pure solvent flow (Sec. IV A)
     dictionary "cond":
-    inherite from dictionary "pre_cond" argument described below.
-    'Cp' : [WIP]
+    inherite from dictionary "pre_cond" parameter described below.
+    'Ap' : [WIP]
     
-    Arguments:
+    Parameters:
         pre_cond = {'k':k, 'R':R_channel, 'L':L_channel, 'Lp':Lp, 'eta0':eta0, 'preU':prefactor_U}
             'k'    : system parameter k in Eq. (26)   in the dimensionless unit
             'R'    : radius of membrane channel       in the unit of m
@@ -31,42 +35,94 @@ def get_cond(pre_cond, Pin, Pout, Pper): # conditions for pure solvent flow
                                                       in the unit of Pa
     
     """
-    k = pre_cond['k'] # dimensionless value for k (Eq. 26)
+    COND_TYPE = 'PS' # describe this condition dictionary is type of PS (pure solvent)
     
-    DLP = Pin - Pout # Longitudinal pressure difference
-    DTP_HP = (1/2.)*(Pin + Pout) - Pper # Length-averaged TMP with linear pressure approximation
-    DTP = DTP_HP*2.*tanh(k/2.)/k # Length-averaged TMP
-    vw0 = pre_cond['Lp']*DTP_HP # v^\ast
+    k = pre_cond['k'] 
+    
+    DLP = Pin - Pout                    # Longitudinal pressure difference
+    DTP_HP = (1/2.)*(Pin + Pout) - Pper # Length-averaged TMP with linear pressure approximation in Eq. (8)
+    DTP = DTP_HP*2.*tanh(k/2.)/k        # Length-averaged TMP in Eq. (7)
+    vw0 = pre_cond['Lp']*DTP_HP         # v^\ast in Eq. (21)
+    alpha_ast = DTP_HP/DLP              # alpha^\ast in Eq. (23)
+    beta_ast = k**2.0 * alpha_ast       # beta^\ast in Eq. (24) and (26)
     
     print ('Pin, Pout, Pper in Pa : ', Pin, Pout, Pper)
     print ('DLP, DTP, DTP_HP in Pa : ', DLP, DTP, DTP_HP)
     
-    Cp = get_Cpm(k, +1.0, Pin, Pout, Pper) 
-    Cm = get_Cpm(k, -1.0, Pin, Pout, Pper)
-    print ('Cp, Cm : ', Cp, Cm)
-    cond = {'k':pre_cond['k'], 'Cp':Cp, 'Cm':Cm, 'Pin':Pin, 'Pout':Pout, 'Pper':Pper,\
-           'R':pre_cond['R'], 'L':pre_cond['L'], 'Lp':pre_cond['Lp'], 'eta0':pre_cond['eta0'],
-            'preU':pre_cond['preU'], 'vw0':vw0}    
+    Ap = get_Apm(+1.0, k, alpha_ast, Pper/DLP)
+    Am = get_Apm(-1.0, k, alpha_ast, Pper/DLP)
+    print ('Ap, Am : ', Ap, Am)
+    cond = {'k':pre_cond['k'], 'Ap':Ap, 'Am':Am, 'Pin':Pin, 'Pout':Pout, 'Pper':Pper,\
+           'R':pre_cond['R'], 'L':pre_cond['L'], 'Lp':pre_cond['Lp'], 'eta0':pre_cond['eta0'], \
+            'preU':pre_cond['preU'], 'vw0':vw0, 'alpha_ast':alpha_ast, 'beta_ast':beta_ast,\
+            'Pper_div_DLP':Pper/DLP, 'COND':COND_TYPE}
     return cond
 
 ## coefficients
-def get_Cpm(k, pm, P_in, P_out, P_per):
-    return pm*(P_out - P_per - (P_in - P_per)*exp(-pm*k))/(2.*sinh(k))
+# def get_Apm(k, pm, P_in, P_out, P_per):
+#     return pm*(P_out - P_per - (P_in - P_per)*exp(-pm*k))/(2.*sinh(k))
+
+def get_Apm(pm, k, alpha_ast, Pper_div_DLP):
+    """ Get dimensionless Apm using Eq. (32)
+    """
+    return pm*(1./(4.*sinh(k)))*(2.*alpha_ast - 1. - (2.*alpha_ast + 1)*exp(-pm*k))
+
+def get_Apm_conv(pm, cond):
+    """ Convinience version for get_Apm using cond
+    """
+    return get_Apm(pm, cond['k'], cond['alpha_ast'], cond['Pper_div_DLP'])
+    
 
 ## solutions
-def get_P(r, z, cond):
-    k=cond['k']; Pper = cond['Pper']; Cp = cond['Cp']; Cm = cond['Cm']; L = cond['L']
-    return Pper + Cp*exp(k*z/L) + Cm*exp(-k*z/L)
+# def get_P(r, z, cond):
+#     k=cond['k']; Pper = cond['Pper']; Ap = cond['Ap']; Am = cond['Am']; L = cond['L']
+#     return Pper + Ap*exp(k*z/L) + Am*exp(-k*z/L)
 
-def get_u(r, z, cond):
-    k=cond['k']; Pper = cond['Pper']; Cp = cond['Cp']; Cm = cond['Cm']
-    L = cond['L']; R = cond['R']; preU=cond['preU']
-    return -preU * (1 - (r/R)**2.0)*(Cp*exp(k*z/L) - Cm*exp(-k*z/L))
+def get_P(z_div_L, k, Ap, Am, Pper_div_DLP):
+    """ Using Eq. (31) (the first expression)
+    """
+    return Pper_div_DLP + Ap*exp(k*z_div_L) + Am*exp(-k*z_div_L)
 
-def get_v(r, z, cond):
-    k=cond['k']; Pper = cond['Pper']; Cp = cond['Cp']; Cm = cond['Cm']
-    L = cond['L']; R = cond['R']; preU=cond['preU']; Lp=cond['Lp']    
-    return Lp*(2.*(r/R) - (r/R)**3.0)*(Cp*exp(k*z/L)+Cm*exp(-k*z/L))
+def get_P_conv(z_div_L, cond):
+    return get_P(z_div_L, cond['k'], cond['Ap'], cond['Am'], cond['Pper_div_DLP'])
+
+# def get_P(r, z, cond):
+#     k=cond['k']; Pper = cond['Pper']; Ap = cond['Ap']; Am = cond['Am']; L = cond['L']
+#     return cond['Pper']/cond['DLP'] + cond['Ap']*exp(k*z/L) + cond['Am']*exp(-k*z/L)
+
+def get_u(r_div_R, z_div_L, k, Ap, Am):
+    """ Using Eq. (31) (the second expression)
+    """
+    uR_HP = 1. - r_div_R**2.0
+    uZ_PS = -k*(exp( k*z_div_L)*Ap - exp(-k*z_div_L)*Am)
+    return uZ_PS*uR_HP
+
+def get_u_conv(r_div_R, z_div_L, cond):
+    return get_u(r_div_R, z_div_L, cond['k'], cond['Ap'], cond['Am'])
+
+
+
+# def get_u(r, z, cond):
+#     k=cond['k']; Pper = cond['Pper']; Ap = cond['Ap']; Am = cond['Am']
+#     L = cond['L']; R = cond['R']; preU=cond['preU']
+#     return -preU * (1 - (r/R)**2.0)*(Ap*exp(k*z/L) - Am*exp(-k*z/L))
+
+def get_v(r_div_R, z_div_L, k, alpha_ast, Ap, Am):
+    """ Using Eq. (31) (the third expression)
+    """
+    sign = +1.
+    vR = 2.*r_div_R - r_div_R**3.0
+    vw =(exp( k*z_div_L)*Ap + exp(-k*z_div_L)*Am)/alpha_ast
+
+    return sign*vR*vw
+
+def get_v_conv(r_div_R, z_div_L, cond):
+    return get_v(r_div_R, z_div_L, cond['k'], cond['alpha_ast'], cond['Ap'], cond['Am'])
+
+# def get_v(r, z, cond):
+#     k=cond['k']; Pper = cond['Pper']; Ap = cond['Ap']; Am = cond['Am']
+#     L = cond['L']; R = cond['R']; preU=cond['preU']; Lp=cond['Lp']    
+#     return Lp*(2.*(r/R) - (r/R)**3.0)*(Ap*exp(k*z/L)+Am*exp(-k*z/L))
 
 
 # different operating conditions
