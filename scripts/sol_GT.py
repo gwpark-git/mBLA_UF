@@ -15,9 +15,9 @@ from numpy import *
 import sol_CT as CT
 from scipy.interpolate import interp1d
 
-def get_cond_GT(cond_CT, phi_bulk, epsilon_d, dr, dz, gamma):
-    if (cond_CT['COND'] <> 'CT'):
-        print('Error: inherit non-CT type of dictionary in get_cond_GT is not supported.')
+def get_cond(cond_CT, phi_bulk, epsilon_d, dr, dz, gamma, weight):
+    if (cond_CT['COND'] != 'CT'):
+        print('Error: inherit non-CT type of dictionary in get_cond is not supported.')
         
     COND_TYPE       = 'GT'
     re              = cond_CT.copy()
@@ -27,6 +27,7 @@ def get_cond_GT(cond_CT, phi_bulk, epsilon_d, dr, dz, gamma):
     re['dr']        = dr
     re['dz']        = dz
     re['gamma']     = gamma
+    re['weight']    = weight
     return re
 
 
@@ -35,8 +36,8 @@ def get_cond_GT(cond_CT, phi_bulk, epsilon_d, dr, dz, gamma):
 def get_P_conv(r_div_R, z_div_L, cond_GT, gp, gm):
     return get_P(r_div_R, z_div_L, cond_GT['Pper_div_DLP'], cond_GT['k'], cond_GT['Bp'], cond_GT['Bm'], gp, gm)
 
-def get_u_conv(r_div_R, z_div_L, cond_GT, gp, gm, INT_Ieta_yt_with_fixed_z):
-    return get_u(r_div_R, z_div_L, cond_GT['k'], cond_GT['Bp'], cond_GT['Bm'], gp, gm, INT_Ieta_yt_with_fixed_z)
+def get_u_conv(r_div_R, z_div_L, cond_GT, gp, gm, int_Y):
+    return get_u(r_div_R, z_div_L, cond_GT['k'], cond_GT['Bp'], cond_GT['Bm'], gp, gm, int_Y)
 
 def get_v_conv(r_div_R, z_div_L, Pi_div_DLP, cond_GT, gp, gm):
     return get_v(r_div_R, z_div_L, Pi_div_DLP, cond_GT['k'], cond_GT['alpha_ast'], cond_GT['Bp'], cond_GT['Bm'], gp, gm)
@@ -50,18 +51,18 @@ def get_P(r_div_R, z_div_L, Pper_div_DLP, k, Bp, Bm, gp, gm):
     return CT.get_P(r_div_R, z_div_L, Pper_div_DLP, k, Bp, Bm, gp, gm)
 
 
-def get_u(r_div_R, z_div_L, k, Bp, Bm, gp, gm, INT_Ieta_yt_with_fixed_z):
+def get_u(r_div_R, z_div_L, k, Bp, Bm, gp, gm, int_Y):
     """ Using expressions u in Eq. (45) 
     and integrate 1/eta from r to 1 is reversed from 0 to y (sign change is already applied)
     u_Z^out is given in following Eq. (45)
     """
     
     y_div_R = 1. - r_div_R
-    int_Y = INT_Ieta_yt_with_fixed_z(y_div_R)
+    # int_Y = INT_Ieta_yt_with_fixed_z(y_div_R) # for variable y, we should use the interpolation function
     
     uR = (1. + r_div_R)*int_Y
-    uZ_out = exp(k*z_div_L)*(Bp + (k/2.)*gm) \
-        - exp(-k*z_div_L)*(Bm + (k/2.)*gp)
+    uZ_out = -k*(exp(k*z_div_L)*(Bp + (k/2.)*gm) \
+                 - exp(-k*z_div_L)*(Bm + (k/2.)*gp))
 
     return uZ_out * uR
 
@@ -79,7 +80,7 @@ def get_v(r_div_R, z_div_L, Pi_div_DLP, k, alpha_ast, Bp, Bm, gp, gm):
 
 # for y-directional information related with outer solution
 
-def gen_yt_arr(cond_GT):
+def gen_y_div_R_arr(cond_GT):
     """ This is generating discretized dimensionless y-coordinate
     The selected way for the adaptive step size is only for the temporary
     There are revised version, which will be applied for the near future.
@@ -121,7 +122,7 @@ def cal_f_RK(yt, dyt, f, df, int_INV_D_pre, vw_div_vw0, fcn_D, cond_GT):
     return (-1./ed)*(vw_div_vw0/fcn_D(f_new, cond_GT))*(f_new - phi_b*(1. - exp(-(vw_div_vw0/ed)*int_INV_D)))
 
 
-def gen_phi_wrt_yt(z_div_L, phiw, fcn_D, vw_div_vw0, y_div_R_arr, phi_arr, phi_b, ed):
+def gen_phi_wrt_yt(z_div_L, phiw, fcn_D, vw_div_vw0, y_div_R_arr, phi_arr, cond_GT):
     """ Generating phi with respect to y_div_R using expression of phi Eq. (49).
 
     Note that the matched asymptotic phi is the implicit equation, which make difficult
@@ -130,18 +131,21 @@ def gen_phi_wrt_yt(z_div_L, phiw, fcn_D, vw_div_vw0, y_div_R_arr, phi_arr, phi_b
     Instead, we define our own y_div_R evolution based on Runge-Kutta 4th order method.
     This is supported by cal_f_RK function defined above.
     """
+    phi_b = cond_GT['phi_bulk']
+    ed = cond_GT['epsilon_d']
     
     phi = phiw
     int_INV_D_pre = 0.
     for i in range(1, size(y_div_R_arr)):
         y2 = y_div_R_arr[i]; y1 = y_div_R_arr[i-1]
-        yh = y_1 + dy/2. # for RK4 method        
-        dy = y2 - y1
+        dy = y2 - y1        
+        yh = y1 + dy/2. # for RK4 method        
+
         phi_1 = phi_arr[i-1]
-        k1 = dy * cal_f_RK(y_1, 0., phi_1, 0., int_INV_D_pre, vw_div_vw0, fcn_D, cond_GT)
-        k2 = dy * cal_f_RK(y_1, dy/2., phi_1, k1/2., int_INV_D_pre, vw_div_vw0, fcn_D, cond_GT)
-        k3 = dy * cal_f_RK(y_1, dy/2., phi_1, k2/2., int_INV_D_pre, vw_div_vw0, fcn_D, cond_GT)
-        k4 = dy * cal_f_RK(y_1, dy, phi_1, k3, int_INV_D_pre, vw_div_vw0, fcn_D, cond_GT)
+        k1 = dy * cal_f_RK(y1, 0., phi_1, 0., int_INV_D_pre, vw_div_vw0, fcn_D, cond_GT)
+        k2 = dy * cal_f_RK(y1, dy/2., phi_1, k1/2., int_INV_D_pre, vw_div_vw0, fcn_D, cond_GT)
+        k3 = dy * cal_f_RK(y1, dy/2., phi_1, k2/2., int_INV_D_pre, vw_div_vw0, fcn_D, cond_GT)
+        k4 = dy * cal_f_RK(y1, dy, phi_1, k3, int_INV_D_pre, vw_div_vw0, fcn_D, cond_GT)
         phi_2 = phi_1 + (1./6.)*(k1 + 2.*k2 + 2.*k3 + k4)
         phi_arr[i] = phi_2
 
@@ -178,7 +182,7 @@ def gen_INT_inv_f_wrt_yt(yt_arr, phi_arr, INT_inv_f_arr, f_given, cond_GT):
     return 0
 
 
-def cal_F2_0(vw_div_vw0_z0, ed, yt_arr, Ieta_arr_z0, ID_arr_z0):
+def cal_F2_0(vw_div_vw0_z0, ed, yt_arr, Ieta_arr_z0, ID_arr_z0, uZ_z0):
     """ Calculate F2_0 for cal_int_Fz
     This is decoupled from cal_int_Fz for z>0 because the value F2_0 will be used for calculating F2_Z for all z>0.
     Therefore, this additional help function will reduce the overhead of calculation, even though the real function is just a part of cal_int_Fz.
@@ -194,9 +198,11 @@ def cal_F2_0(vw_div_vw0_z0, ed, yt_arr, Ieta_arr_z0, ID_arr_z0):
         tmp_F2_0_1 = tmp_F2_0_2
         tmp_F2_0_2 = (1. - yt_arr[i])*(2. - yt_arr[i])*Ieta_arr_z0[i]*(1. - exp(-(vw_div_vw0_z0/ed)*ID_arr_z0[i])*((vw_div_vw0_z0/ed)*ID_arr_z0[i]))
         re_F2_0 += 0.5 * dy * (tmp_F2_0_1 + tmp_F2_0_2)
+
+    re_F2_0 *= uZ_z0
     return re_F2_0
 
-def cal_int_Fz(given_re_F2_0, vw_div_vw0, ed, yt_arr, Ieta_arr, ID_arr):
+def cal_int_Fz(given_re_F2_0, vw_div_vw0, ed, yt_arr, Ieta_arr, ID_arr, uZ_zi):
     # ref: process_at_z_modi
     """ Calculate Fz[phi_w] using Eq. (D3)
     For readability, a new notation is used here:
@@ -225,7 +231,9 @@ def cal_int_Fz(given_re_F2_0, vw_div_vw0, ed, yt_arr, Ieta_arr, ID_arr):
         tmp_F2_Z_1 = tmp_F2_Z_2
         tmp_F2_Z_2 = (1. - yt_arr[i])*(2. - yt_arr[i])*Ieta_arr[i]*(1. - exp(-(vw_div_vw0/ed)*ID_arr[i])*((vw_div_vw0/ed)*ID_arr[i]))
         re_F2_Z += 0.5 * dy * (tmp_F2_Z_1 + tmp_F2_Z_2)
-    return 1. - (given_re_F2_0 - re_F2_Z)/re_F1_Z
+    re_F1_Z *= uZ_zi
+    re_F2_Z *= uZ_zi
+    return 1. + (given_re_F2_0 - re_F2_Z)/re_F1_Z
 
 def FPI_operator(weight, val_pre, val_new):
     """ val_new = (1. - weight)*val_pre + weight*val_new
@@ -242,18 +250,21 @@ def FPI_operator(weight, val_pre, val_new):
 
     Output: overwrite val_new (without return value)
     """
-    val_new = (1. - weight)*val_pre + weight*val_new 
+    for i in range(size(val_pre)):
+        val_new[i] = (1. - weight)*val_pre[i] + weight*val_new[i]
     return 0
+    # return (1. - weight)*val_pre + weight*val_int
+    # return val_new
     # return (1. - weight)*val_pre + weight*val_new
 
-def gen_new_phiw_div_phib_arr(phiw_div_phib_arr_new, cond_GT, fcn_D, fcn_eta, z_div_L_arr, phiw_div_phib_arr, Pi_div_DLP_arr, weight, gp_arr, gm_arr, y_div_R_arr):
+def gen_new_phiw_div_phib_arr(phiw_div_phib_arr_new, cond_GT, fcn_D, fcn_eta, z_div_L_arr, phiw_div_phib_arr, Pi_div_DLP_arr, weight, gp_arr, gm_arr, yt_arr):
     """ Calculation phi_w/phi_b at the given z using Eq. (D3)
     The detailed terms in Eq. (D3) is explained in the function cal_int_Fz which calculate the integration.
     """
     phi_b = cond_GT['phi_bulk']
     ed = cond_GT['epsilon_d']
     
-    Ny = size(y_div_R_arr)
+    Ny = size(yt_arr)
     phi_arr_z0 = zeros(Ny)
     Ieta_arr_z0 = zeros(Ny)
     ID_arr_z0 = zeros(Ny)
@@ -269,24 +280,29 @@ def gen_new_phiw_div_phib_arr(phiw_div_phib_arr_new, cond_GT, fcn_D, fcn_eta, z_
     r0_div_R = 0.
     rw_div_R = 1.
     
-    vw_div_vw0_z0 = get_v_conv(r_div_R=rw_div_R, z_div_L=z0_div_L, Pi_div_DLP_arr[ind_z0], cond_GT, gp_arr[ind_z0], gm_arr[ind_z0])
-    gen_phi_wrt_yt(z_div_L=z0_div_L, phiw_div_phib_arr[ind_z0]*phi_b, fcn_D, vw_div_vw0_z0, y_div_R_arr, phi_arr_z0, phi_b, ed)
-    gen_INT_inv_f_wrt_yt(y_div_R_arr, phi_arr_z0, Ieta_arr_z0, fcn_eta, cond_GT)
-    gen_INT_inv_f_wrt_yt(y_div_R_arr, phi_arr_z0, ID_arr_z0, fcn_D, cond_GT)
+    vw_div_vw0_z0 = get_v_conv(rw_div_R, z0_div_L, Pi_div_DLP_arr[ind_z0], cond_GT, gp_arr[ind_z0], gm_arr[ind_z0])
+    gen_phi_wrt_yt(z0_div_L, phiw_div_phib_arr[ind_z0]*phi_b, fcn_D, vw_div_vw0_z0, yt_arr, phi_arr_z0, cond_GT)
+    gen_INT_inv_f_wrt_yt(yt_arr, phi_arr_z0, Ieta_arr_z0, fcn_eta, cond_GT)
+    gen_INT_inv_f_wrt_yt(yt_arr, phi_arr_z0, ID_arr_z0, fcn_D, cond_GT)
 
-    uZ0 = get_u_conv(r_div_R=r0_div_R, z_div_L=z0_div_L, cond_GT, gp_arr[ind_z0], gm_arr[ind_z0], Ieta_arr_z0)
-    F2_0 = cal_F2_0(vw_div_vw0_z0, ed, y_div_R_arr, Ieta_arr_z0, ID_arr_z0)
+    uZ_z0 = get_u_conv(r0_div_R, z0_div_L, cond_GT, gp_arr[ind_z0], gm_arr[ind_z0], Ieta_arr_z0[-1])
+    F2_0 = cal_F2_0(vw_div_vw0_z0, ed, yt_arr, Ieta_arr_z0, ID_arr_z0, uZ_z0)
 
-    for i in range(1, size(z_arr)):
-        vw_div_vw0_zi = get_v_conv(r_div_R=rw_div_R, z_div_L=z_div_L_arr[i], Pi_div_DLP_arr[i], cond_GT, gp_arr[i], gm_arr[i])
-        gen_phi_wrt_yt(z_div_L=z_div_L_arr[i], phiw_div_phib_arr[i]*phi_b, fcn_D, vw_div_vw0_zi, y_div_R_arr, phi_arr_zi, phi_b, ed)
-        gen_INT_inv_f_wrt_yt(y_div_R_arr, phi_arr_zi, Ieta_arr_zi, fcn_eta, cond_GT)
-        gen_INT_inv_f_wrt_yt(y_div_R_arr, phi_arr_zi, ID_arr_zi, fcn_D, cond_GT)
+    for i in range(1, size(z_div_L_arr)):
+        vw_div_vw0_zi = get_v_conv(rw_div_R, z_div_L_arr[i], Pi_div_DLP_arr[i], cond_GT, gp_arr[i], gm_arr[i])
+        gen_phi_wrt_yt(z_div_L_arr[i], phiw_div_phib_arr[i]*phi_b, fcn_D, vw_div_vw0_zi, yt_arr, phi_arr_zi, cond_GT)
+        gen_INT_inv_f_wrt_yt(yt_arr, phi_arr_zi, Ieta_arr_zi, fcn_eta, cond_GT)
+        gen_INT_inv_f_wrt_yt(yt_arr, phi_arr_zi, ID_arr_zi, fcn_D, cond_GT)
+        uZ_zi = get_u_conv(r0_div_R, z_div_L_arr[i], cond_GT, gp_arr[i], gm_arr[i], Ieta_arr_zi[-1])
         
-        phiw_div_phib_arr_new[i] = cal_int_Fz(given_re_F2_0, vw_div_vw0_zi, ed, yt_arr, Ieta_arr_zi, ID_arr_zi)
+        phiw_div_phib_arr_new[i] = cal_int_Fz(F2_0, vw_div_vw0_zi, ed, yt_arr, Ieta_arr_zi, ID_arr_zi, uZ_zi)
+        # print (z_div_L_arr[i], vw_div_vw0_zi, phiw_div_phib_arr_new[i])
 
+    # print(phiw_div_phib_arr[-1])
+    # print(phiw_div_phib_arr_new[-1])
+    # print(phiw_div_phib_arr_new)
     FPI_operator(cond_GT['weight'], phiw_div_phib_arr, phiw_div_phib_arr_new)
-    
+    # print(phiw_div_phib_arr_new)
     return 0
 
 

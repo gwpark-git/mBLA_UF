@@ -52,7 +52,7 @@ def get_cond(pre_cond, Pin, Pout, Pper): # conditions for pure solvent flow
     Ap = get_Apm(+1.0, k, alpha_ast, Pper/DLP)
     Am = get_Apm(-1.0, k, alpha_ast, Pper/DLP)
     print ('Ap, Am : ', Ap, Am)
-    cond = {'k':pre_cond['k'], 'Ap':Ap, 'Am':Am, 'Pin':Pin, 'Pout':Pout, 'Pper':Pper,\
+    cond = {'k':pre_cond['k'], 'Ap':Ap, 'Am':Am, 'Pin':Pin, 'Pout':Pout, 'Pper':Pper, 'DLP':DLP,\
            'R':pre_cond['R'], 'L':pre_cond['L'], 'Lp':pre_cond['Lp'], 'eta0':pre_cond['eta0'], \
             'preU':pre_cond['preU'], 'vw0':vw0, 'alpha_ast':alpha_ast, 'beta_ast':beta_ast,\
             'Pper_div_DLP':Pper/DLP, 'COND':COND_TYPE}

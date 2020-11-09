@@ -7,12 +7,19 @@
 #   email: g.park@fz-juelich.de                                             #
 #############################################################################
 
-from sol_CT import *
-from sol_GT import *
-from sol_GT_parallel import *
+# from sol_CT import *
+# from sol_GT import *
+# from sol_GT_parallel import *
 
-from osmotic_pressure_CS import *
-from transport_properties_SPHS import *
+import sol_solvent as PS
+import sol_CT as CT
+import sol_GT as GT
+
+
+# from osmotic_pressure_CS import *
+# from transport_properties_SPHS import *
+import osmotic_pressure_CS as CS
+import transport_properties_SPHS as PHS
 
 import sys
 from numpy import *
@@ -92,8 +99,9 @@ def gen_analysis(z_arr, yt_arr, phiw_arr, cond_GT, fcn_Pi, fcn_Dc_given, fcn_eta
     gp_arr = zeros(Nz)
     gm_arr = zeros(Nz)
     for i in range(Nz):
-        gp_arr[i] = get_gpm(z_arr[i], dz, +1.0, Pi_arr, cond_GT['k'], cond_GT['L'])
-        gm_arr[i] = get_gpm(z_arr[i], dz, -1.0, Pi_arr, cond_GT['k'], cond_GT['L'])
+        # gp_arr[i] = get_gpm(z_arr[i], dz, +1.0, Pi_arr, cond_GT['k'], cond_GT['L'])
+        # gm_arr[i] = get_gpm(z_arr[i], dz, -1.0, Pi_arr, cond_GT['k'], cond_GT['L'])
+        
         phi_arr = zeros(Ny)
         Ieta_arr = zeros(Ny)
         ID_arr = zeros(Ny)

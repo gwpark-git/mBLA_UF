@@ -20,8 +20,8 @@
 from numpy import *
 import sol_solvent as PS
 
-def get_cond(cond_PS, a_colloid, Va, kT, dz, Pi_arr):
-    if (cond_CT['COND'] <> 'PS'):
+def get_cond(cond_PS, a_colloid, Va, kT, dz, Pi_arr, Gk):
+    if (cond_PS['COND'] != 'PS'):
         print('Error: inherit non-PS type of dictionary in get_cond_CT is not supported.')
     
     COND_TYPE = 'CT'
@@ -32,9 +32,13 @@ def get_cond(cond_PS, a_colloid, Va, kT, dz, Pi_arr):
     re['Va']   = Va                                                                    # particle volume in the unit of m^3
     re['kT']   = kT                                                                    # thermal energy in the unit of J
     re['dz']   = dz                                                                    # step size for z in the unit of m
-    re['Gk']   = get_Gk(re['k'], re['dz']/re['L_channel'], Pi_arr/re['DLP'])           # correction factor for Bpm in the dimensionless unit
+    re['Gk']   = Gk # correction factor for Bpm in the dimensionless unit
     re['Bp']   = get_Bpm(+1.0, re['k'], re['alpha_ast'], re['Pper_div_DLP'], re['Gk']) # calculated Bp in the dimensionless unit
     re['Bm']   = get_Bpm(-1.0, re['k'], re['alpha_ast'], re['Pper_div_DLP'], re['Gk']) # calculate Bm in the dimensionless unit
+
+    # re['Gk']   = get_Gk(re['k'], re['dz']/re['L'], Pi_arr/re['DLP'])                   # correction factor for Bpm in the dimensionless unit
+    # re['Bp']   = get_Bpm(+1.0, re['k'], re['alpha_ast'], re['Pper_div_DLP'], re['Gk']) # calculated Bp in the dimensionless unit
+    # re['Bm']   = get_Bpm(-1.0, re['k'], re['alpha_ast'], re['Pper_div_DLP'], re['Gk']) # calculate Bm in the dimensionless unit
 
     print ('Gk = ', re['Gk'])
     print ('Bp, Bm : ', re['Bp'], re['Bm'])
@@ -43,6 +47,8 @@ def get_cond(cond_PS, a_colloid, Va, kT, dz, Pi_arr):
 
 def get_gpm(pm, z_div_L, dz_div_L, Pi_div_DLP_arr, k):
     """ Using expresion for gpm(zt=1) in Eq. (46)
+    Note: This contains a lot of overhead since it will take a numerical integration from z=0 to z=given value.
+        Therefore, it is recommendable to use other function: gen_gpm_arr
     """
     re = 0.
     for i in range(0, int(round(z_div_L/dz_div_L)) - 1):
@@ -51,7 +57,7 @@ def get_gpm(pm, z_div_L, dz_div_L, Pi_div_DLP_arr, k):
         y1 = exp(pm * k * zt_tmp_1)*Pi_div_DLP_arr[i]
         y2 = exp(pm * k * zt_tmp_2)*Pi_div_DLP_arr[i+1]
         re += 0.5 * dz_div_L * (y1 + y2)
-    return pm*re*k/2. 
+    return pm*re*k/2.
 
 def get_Gk(k, dz_div_L, Pi_div_DLP_arr):
     """ Using expression for part of Bpm (Bpm - Apm) in Eq. (46)
@@ -59,7 +65,32 @@ def get_Gk(k, dz_div_L, Pi_div_DLP_arr):
     gp1 = get_gpm(+1., 1., dz_div_L, Pi_div_DLP_arr, k)
     gm1 = get_gpm(-1., 1., dz_div_L, Pi_div_DLP_arr, k)
     print ('Gpt(1), Gmt(1) = ', gp1, gm1)
-    return (gm1 * exp(k) + g1 * exp(-k))/(2.*sinh(k))
+    return (gm1 * exp(k) + gp1 * exp(-k))/(2.*sinh(k))
+
+def gen_gpm_arr(pm, z_div_L_arr, dz_div_L, Pi_div_DLP_arr, k, gpm_arr):
+    """ Generation gpm_arr based on Eq. (46)
+    """
+    re = 0.
+    gpm_arr[0] = re
+    # for i in range(0, int(round(z_div_L/dz_div_L)) - 1):
+    for i in range(1, size(z_div_L_arr)):
+        zt_tmp_1 = (i-1)*dz_div_L
+        zt_tmp_2 = zt_tmp_1 + dz_div_L
+        y1 = exp(pm * k * zt_tmp_1)*Pi_div_DLP_arr[i-1]
+        y2 = exp(pm * k * zt_tmp_2)*Pi_div_DLP_arr[i]
+        re += 0.5 * dz_div_L * (y1 + y2)
+        gpm_arr[i] = pm * re * k/2.
+    return 0
+    # return pm*re*k/2.
+
+def get_Gk_boost(k, dz_div_L, Pi_div_DLP_arr, gp1, gm1):
+    """ Using expression for part of Bpm (Bpm - Apm) in Eq. (46)
+    """
+    # gp1 = get_gpm(+1., 1., dz_div_L, Pi_div_DLP_arr, k)
+    # gm1 = get_gpm(-1., 1., dz_div_L, Pi_div_DLP_arr, k)
+    print ('Gpt(1), Gmt(1) = ', gp1, gm1)
+    return (gm1 * exp(k) + gp1 * exp(-k))/(2.*sinh(k))
+
 
 def get_Bpm(pm, k, alpha_ast, Pper_div_DLP, Gk):
     """ Using expression for Bpm in Eq. (47)
