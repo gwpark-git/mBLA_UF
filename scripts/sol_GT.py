@@ -231,6 +231,7 @@ def cal_int_Fz(given_re_F2_0, vw_div_vw0, ed, yt_arr, Ieta_arr, ID_arr, uZ_zi):
         tmp_F2_Z_1 = tmp_F2_Z_2
         tmp_F2_Z_2 = (1. - yt_arr[i])*(2. - yt_arr[i])*Ieta_arr[i]*(1. - exp(-(vw_div_vw0/ed)*ID_arr[i])*((vw_div_vw0/ed)*ID_arr[i]))
         re_F2_Z += 0.5 * dy * (tmp_F2_Z_1 + tmp_F2_Z_2)
+        
     re_F1_Z *= uZ_zi
     re_F2_Z *= uZ_zi
     return 1. + (given_re_F2_0 - re_F2_Z)/re_F1_Z

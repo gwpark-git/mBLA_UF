@@ -105,12 +105,12 @@ else:
     #         phiw_update = get_new_phiw_div_phib_modi_arr
     #     else:
     #         phiw_update = get_new_phiw_div_phib_arr
-    phiw_update = gen_new_phiw_div_phib_arr
+    phiw_update = GT.gen_new_phiw_div_phib_arr
 
     Pi_arr = zeros(size(phiw_arr))                                     # calculating osmotic pressure using initial conditions
     Pi_div_DLP_arr = Pi_arr/cond_PS['DLP']
     
-    Gk_tmp = get_Gk(cond_PS['k'], dz/L_channel, Pi_div_DLP_arr)
+    Gk_tmp = CT.get_Gk(cond_PS['k'], dz/L_channel, Pi_div_DLP_arr)
     cond_CT = CT.get_cond(cond_PS, a_particle, Va, kT, dz, Pi_arr, Gk_tmp)     # allocating conditions for the constant transport properties
     cond_GT = GT.get_cond(cond_CT, phi_bulk, epsilon_d, dr, dz, gamma, weight) # allocating conditions for the general transport properties
 
@@ -138,7 +138,7 @@ else:
         Pi_div_DLP_arr = deepcopy(Pi_arr)/cond_GT['DLP']
         CT.gen_gpm_arr(+1.0, z_div_L_arr, dz_div_L, Pi_div_DLP_arr, k, gp_arr)
         CT.gen_gpm_arr(-1.0, z_div_L_arr, dz_div_L, Pi_div_DLP_arr, k, gm_arr)
-        Gk_tmp = get_Gk_boost(k, dz_div_L, Pi_div_DLP_arr, gp_arr[-1], gm_arr[-1])
+        Gk_tmp = CT.get_Gk_boost(k, dz_div_L, Pi_div_DLP_arr, gp_arr[-1], gm_arr[-1])
         # for i in range(Nz):                                                           # generating g+(z) and g-(z) functions
         #     gp_arr[i] = CT.get_gpm(+1.0, z_div_L_arr[i], dz_div_L, Pi_div_DLP_arr, k)
         #     gm_arr[i] = CT.get_gpm(-1.0, z_div_L_arr[i], dz_div_L, Pi_div_DLP_arr, k)
@@ -179,20 +179,31 @@ else:
                 
                 zi_div_L = z_div_L_arr[i]
                 re[i, 2] = cond_GT['DLP']*GT.get_P_conv(0., zi_div_L, cond_GT, gp_arr[i], gm_arr[i])
-                vw_div_vw0_zi = GT.get_v_conv(1., zi_div_L, Pi_div_DLP_arr[i], cond_GT['k'], cond_GT['alpha_ast'], cond_GT['Bp'], cond_GT['Bm'], gp_arr[i], gm_arr[i])
+                vw_div_vw0_zi = GT.get_v_conv(1., zi_div_L, Pi_div_DLP_arr[i], cond_GT, gp_arr[i], gm_arr[i])
                 re[i, 3] = cond_GT['vw0']*vw_div_vw0_zi
 
-                GT.gen_phi_wrt_yt(z_div_L_arr[i], phiw_div_phib_arr[i]*phi_b, fcn_D, vw_div_vw0_zi, yt_arr, phi_arr_zi, cond_GT)
-                GT.gen_INT_inv_f_wrt_yt(yt_arr, phi_arr_zi, Ieta_arr_zi, fcn_eta, cond_GT)
-                GT.gen_INT_inv_f_wrt_yt(yt_arr, phi_arr_zi, ID_arr_zi, fcn_D, cond_GT)
+                GT.gen_phi_wrt_yt(z_div_L_arr[i], phiw_div_phib_arr[i]*phi_b, fcn_Dc_given, vw_div_vw0_zi, y_div_R_arr, phi_arr_zi, cond_GT)
+                GT.gen_INT_inv_f_wrt_yt(y_div_R_arr, phi_arr_zi, Ieta_arr_zi, fcn_eta_given, cond_GT)
+                GT.gen_INT_inv_f_wrt_yt(y_div_R_arr, phi_arr_zi, ID_arr_zi, fcn_Dc_given, cond_GT)
 
-                re[i, 4] = GT.get_u_conv(0., zi_div_L, cond_GT, gp_arr[i], gm_arr[i], Ieta_arr_zi[-1])
+                re[i, 4] = cond_GT['u_HP']*GT.get_u_conv(0., zi_div_L, cond_GT, gp_arr[i], gm_arr[i], Ieta_arr_zi[-1])
                 re[i, 5] = Pi_arr[i]
                 re[i, 6] = re[i, 2] - cond_GT['Pper']
-                # u_ast is not defined yet. [WIP]
-                
-                # re[i, 7] = re[i
-                # uZ_zi = get_u_conv(r0_div_R, z_div_L_arr[i], cond_GT, gp_arr[i], gm_arr[i], Ieta_arr_zi[-1])
-                
+                re[i, 7] = re[i, 3]/cond_GT['vw0']
+                re[i, 8] = re[i, 4]/cond_GT['u_HP']
 
-    gen_analysis(z_arr, y_div_R_arr, phiw_set_2*phi_b, cond_GT, fcn_Pi_given, fcn_Dc_given, fcn_eta_given, fn_out)
+                Phi_z = 0. # Using Eq. (50)
+                u1 = 0; u2 = 0;
+                for j in range(1, Ny):
+                    dy = y_div_R_arr[j] - y_div_R_arr[j-1]
+                    u1 = u2
+                    u2 = GT.get_u_conv(1. - y_div_R_arr[j], zi_div_L, cond_GT, gp_arr[i], gm_arr[i], Ieta_arr_zi[j])
+
+                    j1 = phi_arr_zi[j-1]*u1; r1 = 1. - y_div_R_arr[j-1]
+                    j2 = phi_arr_zi[j]*u2; r2 = 1. - y_div_R_arr[j]
+
+                    Phi_z += 0.5 * dy * (j1*r1 + j2*r2)
+                    re[i, 9] = Phi_z * 2. * pi * cond_GT['u_HP']*cond_GT['R']**2.0
+                
+    savetxt(fn_out, re)
+    # gen_analysis(z_arr, y_div_R_arr, phiw_set_2*phi_b, cond_GT, fcn_Pi_given, fcn_Dc_given, fcn_eta_given, fn_out)

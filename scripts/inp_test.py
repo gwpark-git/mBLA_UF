@@ -15,13 +15,13 @@ N_iter = 100          # Maximum iteration for FPI
 weight = 0.1          # Relaxation factor for FPI
 Nz = 100              # Z-discritization number
 Nr = 100              # Bulk R-discritization number (note that the boundary-layer R-disc. has a different number)
-IDENT_parallel = True # True/False : parallel computation
+IDENT_parallel = False # True/False : parallel computation
 
-# Methodology
-IDENT_modification = True   # True for newly proposed version and False for the original version 
+# # Methodology
+# IDENT_modification = True   # True for newly proposed version and False for the original version 
 
-# Additional option
-IDENT_verbose = False  # If True, it record all the result steps
+# # Additional option
+# IDENT_verbose = False  # If True, it record all the result steps
 
 # System parameters
 
@@ -32,7 +32,7 @@ eta0 = 1e-3           # Pa*sec     : Solvent viscosity
 T = 293.15            # K          : Temperature
 ref_Pout = 101325     # Pa         : Outlet pressure
 ref_DTP = 5000        # Pa         : Transmembrane pressure (linear approximation)
-DLP = 5000            # Pa         : Longitudinal pressure difference
+DLP = 130             # Pa         : Longitudinal pressure difference
 
 # Dispersion properties
 phi_bulk = 1e-3   # Inlet volume fraction of particle

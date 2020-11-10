@@ -45,6 +45,7 @@ def get_cond(pre_cond, Pin, Pout, Pper): # conditions for pure solvent flow
     vw0 = pre_cond['Lp']*DTP_HP         # v^\ast in Eq. (21)
     alpha_ast = DTP_HP/DLP              # alpha^\ast in Eq. (23)
     beta_ast = k**2.0 * alpha_ast       # beta^\ast in Eq. (24) and (26)
+    u_HP = pre_cond['R']**2.0 * DLP/(4.*pre_cond['eta0']*pre_cond['L'])
     
     print ('Pin, Pout, Pper in Pa : ', Pin, Pout, Pper)
     print ('DLP, DTP, DTP_HP in Pa : ', DLP, DTP, DTP_HP)
@@ -54,7 +55,7 @@ def get_cond(pre_cond, Pin, Pout, Pper): # conditions for pure solvent flow
     print ('Ap, Am : ', Ap, Am)
     cond = {'k':pre_cond['k'], 'Ap':Ap, 'Am':Am, 'Pin':Pin, 'Pout':Pout, 'Pper':Pper, 'DLP':DLP,\
            'R':pre_cond['R'], 'L':pre_cond['L'], 'Lp':pre_cond['Lp'], 'eta0':pre_cond['eta0'], \
-            'preU':pre_cond['preU'], 'vw0':vw0, 'alpha_ast':alpha_ast, 'beta_ast':beta_ast,\
+            'u_HP':u_HP, 'vw0':vw0, 'alpha_ast':alpha_ast, 'beta_ast':beta_ast,\
             'Pper_div_DLP':Pper/DLP, 'COND':COND_TYPE}
     return cond
 

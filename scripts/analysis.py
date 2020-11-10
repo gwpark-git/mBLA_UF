@@ -101,6 +101,8 @@ def gen_analysis(z_arr, yt_arr, phiw_arr, cond_GT, fcn_Pi, fcn_Dc_given, fcn_eta
     for i in range(Nz):
         # gp_arr[i] = get_gpm(z_arr[i], dz, +1.0, Pi_arr, cond_GT['k'], cond_GT['L'])
         # gm_arr[i] = get_gpm(z_arr[i], dz, -1.0, Pi_arr, cond_GT['k'], cond_GT['L'])
+        CT.gen_gpm_arr(+1.0, z_div_L_arr, dz_div_L, Pi_div_DLP_arr, k, gp_arr)
+        CT.gen_gpm_arr(-1.0, z_div_L_arr, dz_div_L, Pi_div_DLP_arr, k, gm_arr)
         
         phi_arr = zeros(Ny)
         Ieta_arr = zeros(Ny)
@@ -115,12 +117,12 @@ def gen_analysis(z_arr, yt_arr, phiw_arr, cond_GT, fcn_Pi, fcn_Dc_given, fcn_eta
         get_int_eta_phi(z_tmp, cond_GT, Pi_arr, fcn_Dc_given, fcn_eta_given, yt_arr, phi_arr, Ieta_arr)
         get_int_D_phi(z_tmp, cond_GT, Pi_arr, fcn_Dc_given, yt_arr, phi_arr, ID_arr)
         INT_Ieta = interp1d(yt_arr, Ieta_arr)
-        re[i, 4] = get_u_center_GT_boost(z_tmp, cond_GT, Pi_arr, fcn_Dc_given, fcn_eta_given, phi_arr, Ieta_arr[-1], gp_arr[i], gm_arr[i])
+        re[i, 4] = cond_GT['u_HP']*get_u_center_GT_boost(z_tmp, cond_GT, Pi_arr, fcn_Dc_given, fcn_eta_given, phi_arr, Ieta_arr[-1], gp_arr[i], gm_arr[i])
         re[i, 5] = Pi_arr[i]
 
         re[i, 6] = re[i, 2] - cond_GT['Pper']
         re[i, 7] = re[i, 3]/cond_GT['vw0']
-        re[i, 8] = re[i, 4]/u0
+        re[i, 8] = re[i, 4]/cond_GT['u_HP']
 
         Phi_z = 0.
         u1 = 0; u2 = 0;
