@@ -20,7 +20,7 @@
 from numpy import *
 import sol_solvent as PS
 
-def get_cond(cond_PS, a_colloid, Va, kT, dz, Pi_arr, Gk):
+def get_cond(cond_PS, phi_bulk, a_colloid, a_hydrodynamic, Va, kT, dz, Gk):
     if (cond_PS['COND'] != 'PS'):
         print('Error: inherit non-PS type of dictionary in get_cond_CT is not supported.')
     
@@ -28,9 +28,15 @@ def get_cond(cond_PS, a_colloid, Va, kT, dz, Pi_arr, Gk):
     
     re         = cond_PS.copy()
     re['COND'] = COND_TYPE                                                             # update the given type to CT (constant transport properties)
+    re['phi_bulk'] = phi_bulk
     re['a']    = a_colloid                                                             # hard-core radius of particles in the unit of m
+    re['a_H']  = a_hydrodynamic
+    re['gamma']= a_hydrodynamic/a_colloid
     re['Va']   = Va                                                                    # particle volume in the unit of m^3
     re['kT']   = kT                                                                    # thermal energy in the unit of J
+    re['D0']   = kT/(6.*pi*re['eta0']*a_hydrodynamic)
+    re['Pe_R'] = re['R']*re['vw0']/re['D0']
+    re['epsilon_d'] = 1./re['Pe_R']
     re['dz']   = dz                                                                    # step size for z in the unit of m
     re['Gk']   = Gk # correction factor for Bpm in the dimensionless unit
     re['Bp']   = get_Bpm(+1.0, re['k'], re['alpha_ast'], re['Pper_div_DLP'], re['Gk']) # calculated Bp in the dimensionless unit
@@ -41,7 +47,7 @@ def get_cond(cond_PS, a_colloid, Va, kT, dz, Pi_arr, Gk):
     # re['Bm']   = get_Bpm(-1.0, re['k'], re['alpha_ast'], re['Pper_div_DLP'], re['Gk']) # calculate Bm in the dimensionless unit
 
     # print ('Gk = ', re['Gk'])
-    print ('B+ = %4.3e, B- = %4.3e'%(re['Bp'], re['Bm']))
+    # print ('B+ = %4.3e, B- = %4.3e'%(re['Bp'], re['Bm']))
     return re
 
 
@@ -64,7 +70,7 @@ def get_Gk(k, dz_div_L, Pi_div_DLP_arr):
     """
     gp1 = get_gpm(+1., 1., dz_div_L, Pi_div_DLP_arr, k)
     gm1 = get_gpm(-1., 1., dz_div_L, Pi_div_DLP_arr, k)
-    print ('Gpt(1), Gmt(1) = ', gp1, gm1)
+    # print ('Gpt(1), Gmt(1) = ', gp1, gm1)
     return (gm1 * exp(k) + gp1 * exp(-k))/(2.*sinh(k))
 
 def gen_gpm_arr(pm, z_div_L_arr, dz_div_L, Pi_div_DLP_arr, k, gpm_arr):

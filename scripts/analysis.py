@@ -28,6 +28,33 @@ from scipy.interpolate import interp1d
 from scipy.linalg import norm
 from copy import deepcopy
 
+def print_summary(cond_GT):
+    print ('\nSystem and operating conditions:' )
+    print ('  - Summary of dimensional quantities:')
+    print ('\tPin, Pper, ref_Pout in Pa :', int(cond_GT['Pin']), int(cond_GT['Pper']), int(cond_GT['Pout']))
+    print ('\tDLP, DTP_PS, DTP_HP in Pa : ', int(cond_GT['DLP']), int(cond_GT['DTP_PS']), int(cond_GT['DTP_HP']))
+    print ('\tLp=%4.3e, eta0=%4.3e, R=%4.3e, L=%4.3e'%(cond_GT['Lp'], cond_GT['eta0'], cond_GT['R'], cond_GT['L']))
+    print ('\ta=%4.3e, a_H=%4.3e (gamma=a_H/a=%4.3e), D0=%4.3e'%(cond_GT['a'], cond_GT['a_H'], cond_GT['gamma'], cond_GT['D0']))
+
+    print ('  - Corresponding dimensionless quantities:')
+    print ('\tk=%.4f, alpha_ast=%.4f, beta_ast=%.4f'%(cond_GT['k'], cond_GT['alpha_ast'], cond_GT['beta_ast']))
+    print ('\tepsilon=%4.3e, epsilon_d=%4.3e (Pe_R=%.1f)'%(cond_GT['R']/cond_GT['L'], cond_GT['epsilon_d'], 1./cond_GT['epsilon_d']))
+    return 0
+
+def length_average_f(x_arr, f_arr, Lx, dx=0):
+    Nx = size(f_arr)
+
+    if dx>0:
+        return (dx/Lx)*(sum(f_arr) - 0.5*(f_arr[0] + f_arr[-1]))
+    else:
+        re = 0.        
+        for i in range(1, Nx):
+            x1 = x_arr[i-1]
+            x2 = x_arr[i]
+            re += 0.5 * (x2-x1) * (f_arr[i] + f_arr[i-1])
+    return re/Lx
+
+
 def get_psi(s_bar, phi_b, phi_w): 
     """Return psi 
         psi = particle distribution function along y in Eq. (55)
@@ -117,12 +144,12 @@ def gen_analysis(z_arr, yt_arr, phiw_arr, cond_GT, fcn_Pi, fcn_Dc_given, fcn_eta
         get_int_eta_phi(z_tmp, cond_GT, Pi_arr, fcn_Dc_given, fcn_eta_given, yt_arr, phi_arr, Ieta_arr)
         get_int_D_phi(z_tmp, cond_GT, Pi_arr, fcn_Dc_given, yt_arr, phi_arr, ID_arr)
         INT_Ieta = interp1d(yt_arr, Ieta_arr)
-        re[i, 4] = cond_GT['u_HP']*get_u_center_GT_boost(z_tmp, cond_GT, Pi_arr, fcn_Dc_given, fcn_eta_given, phi_arr, Ieta_arr[-1], gp_arr[i], gm_arr[i])
+        re[i, 4] = get_u_center_GT_boost(z_tmp, cond_GT, Pi_arr, fcn_Dc_given, fcn_eta_given, phi_arr, Ieta_arr[-1], gp_arr[i], gm_arr[i])
         re[i, 5] = Pi_arr[i]
 
         re[i, 6] = re[i, 2] - cond_GT['Pper']
         re[i, 7] = re[i, 3]/cond_GT['vw0']
-        re[i, 8] = re[i, 4]/cond_GT['u_HP']
+        re[i, 8] = re[i, 4]/u0
 
         Phi_z = 0.
         u1 = 0; u2 = 0;

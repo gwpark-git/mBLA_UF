@@ -15,19 +15,16 @@ from numpy import *
 import sol_CT as CT
 from scipy.interpolate import interp1d
 
-def get_cond(cond_CT, phi_bulk, epsilon_d, dr, dz, gamma, weight):
+def get_cond(cond_CT, dr, weight):
     if (cond_CT['COND'] != 'CT'):
         print('Error: inherit non-CT type of dictionary in get_cond is not supported.')
         
     COND_TYPE       = 'GT'
     re              = cond_CT.copy()
     re['COND']      = COND_TYPE # update the given type to GT (general transport properties)
-    re['phi_bulk']  = phi_bulk
-    re['epsilon_d'] = epsilon_d
-    re['dr']        = dr
-    re['dz']        = dz
-    re['gamma']     = gamma
-    re['weight']    = weight
+    # re['phi_bulk']  = phi_bulk
+    re['dr']        = dr        # reference dr. note that the actual dr will be adjusted in accordance with boundary layer analysis.
+    re['weight']    = weight    # weight for under-relaxed FPI operator
     return re
 
 

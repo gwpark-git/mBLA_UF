@@ -36,8 +36,8 @@ DLP = 130             # Pa         : Longitudinal pressure difference
 
 # Dispersion properties
 phi_bulk = 1e-3   # Inlet volume fraction of particle
-gamma = 1.0       # Solvent-permeability to hard spheres
-a_particle = 1e-8 # m : Radius of particle
+a_particle = 1e-8 # m : Hard-core radius of particle
+gamma = 1.0       # Solvent-permeability to hard spheres (a_H/a_particle)
 
 # Transport properties
 from osmotic_pressure_CS import *

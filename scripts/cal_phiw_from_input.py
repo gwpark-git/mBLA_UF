@@ -75,26 +75,20 @@ else:
     Va = (4./3.)*pi*a_particle**3.0                                    # volume measure is still using particle exclusion-size
 
     k = 4.*sqrt(L_channel**2.0 * Lp * eta0 /R_channel**3.0)            # dimensionless parameter k
-    prefactor_U = sqrt(Lp*R_channel/eta0)                              # this is related with unit conversion
+    # prefactor_U = sqrt(Lp*R_channel/eta0)                              # this is related with unit conversion
 
-    print ('k, prefactor_U :', k, prefactor_U)
+    # print ('k, prefactor_U :', k, prefactor_U)
 
     Pin = PS.get_Pin(DLP, ref_Pout)                                       # calculating Pin for the given DLP and Pout
     Pper = PS.get_Pper(DLP, ref_DTP, k, ref_Pout)                         # calculating Pper for the given DLP, DTP_linear, k, and P_out
 
-    print ('\nSummary:' )
-    print ('Pin, Pper, ref_Pout :', Pin, Pper, ref_Pout)
-
-    pre_cond = {'k':k, 'R':R_channel, 'L':L_channel, 'Lp':Lp, 'eta0':eta0, 'preU':prefactor_U}
-    print (pre_cond)
-
+    pre_cond = {'k':k, 'R':R_channel, 'L':L_channel, 'Lp':Lp, 'eta0':eta0}
     cond_PS = PS.get_cond(pre_cond, Pin, ref_Pout, Pper)                  # allocating Blank Test (pure test) conditions
 
     DTP_HP = (1/2.)*(Pin + ref_Pout) - Pper                            # length-averaged TMP with a linearly declined pressure approximation
     vw0 = cond_PS['Lp']*DTP_HP                                         # v^\ast
     epsilon_d = D0/(cond_PS['R']*vw0)                                  # 1/Pe_R
-    print (epsilon_d, vw0)
-
+    
     # if IDENT_parallel:                                                 # parallel computation
     #     if IDENT_modification:
     #         phiw_update = get_new_phiw_div_phib_modi_arr_parallel
@@ -111,20 +105,20 @@ else:
     Pi_div_DLP_arr = Pi_arr/cond_PS['DLP']
     
     Gk_tmp = CT.get_Gk(cond_PS['k'], dz/L_channel, Pi_div_DLP_arr)
-    cond_CT = CT.get_cond(cond_PS, a_particle, Va, kT, dz, Pi_arr, Gk_tmp)     # allocating conditions for the constant transport properties
-    cond_GT = GT.get_cond(cond_CT, phi_bulk, epsilon_d, dr, dz, gamma, weight) # allocating conditions for the general transport properties
-
+    cond_CT = CT.get_cond(cond_PS, phi_bulk, a_particle, a_H, Va, kT, dz, Gk_tmp)     # allocating conditions for the constant transport properties
+    cond_GT = GT.get_cond(cond_CT, dr, weight) # allocating conditions for the general transport properties
     
     phi_b= cond_GT['phi_bulk']                                         # set the feed/bulk concentration
     phiw_div_phib_arr = phiw_arr/phi_b                                 # reduced wall concentration
     phiw_set_1 = phiw_div_phib_arr                                     # reduced initial wall concentration
     phiw_set_2 = deepcopy(phiw_set_1)                                  # reduced initial wall concentration
+
+    y_div_R_arr = GT.gen_y_div_R_arr(cond_GT)                          # generating tilde_y with given conditions described in cond_GT
+    Ny = size(y_div_R_arr) 
     
     gp_arr = zeros(Nz)                                                 # constructing array for g+(z) function
     gm_arr = zeros(Nz)                                                 # constructing array for g-(z) function
 
-    y_div_R_arr = GT.gen_y_div_R_arr(cond_GT)                                       # generating tilde_y with given conditions described in cond_GT
-    Ny = size(y_div_R_arr) 
     # if IDENT_verbose:
     #     print ('  IDENT_verbose is turned on, which will record the analysis of result for every FPI steps')
     #     print ('                The current IDENT_verbose option is not parallelized, which takes longer time for computation')
@@ -132,10 +126,27 @@ else:
     #     gen_analysis(z_arr, y_div_R_arr, phiw_set_1*phi_b, cond_GT, fcn_Pi_given, fcn_Dc_given, fcn_eta_given, fn_ver)
     re = zeros([Nz, 11])
 
+    # print ('\nSystem and operating conditions:' )
+    # print ('  - Summary of dimensional quantities:')
+    # print ('\tPin, Pper, ref_Pout in Pa :', int(cond_GT['Pin']), int(cond_GT['Pper']), int(cond_GT['Pout']))
+    # print ('\tDLP, DTP_PS, DTP_HP in Pa : ', int(cond_GT['DLP']), int(cond_GT['DTP_PS']), int(cond_GT['DTP_HP']))
+    # print ('\tLp=%4.3e, eta0=%4.3e, R=%4.3e, L=%4.3e'%(cond_GT['Lp'], cond_GT['eta0'], cond_GT['R'], cond_GT['L']))
+    # print ('\ta=%4.3e, a_H=%4.3e (gamma=a_H/a=%4.3e), D0=%4.3e'%(cond_GT['a'], cond_GT['a_H'], cond_GT['gamma'], cond_GT['D0']))
+
+    # print ('  - Corresponding dimensionless quantities:')
+    # print ('\tk=%.4f, alpha_ast=%.4f, beta_ast=%.4f'%(cond_GT['k'], cond_GT['alpha_ast'], cond_GT['beta_ast']))
+    # print ('\tepsilon=%4.3e, epsilon_d=%4.3e (Pe_R=%.1f)'%(cond_GT['R']/cond_GT['L'], cond_GT['epsilon_d'], 1./cond_GT['epsilon_d']))
+    print_summary(cond_GT)
+    print ('\nCalculating...\n')
+
+    
     for n in range(N_iter):                                                           # main iterator with number n
         phiw_set_1 = deepcopy(phiw_set_2)                                             # reduced wall concentration inherited from the previous iteration
         Pi_arr = fcn_Pi_given(phiw_set_1*phi_b, cond_GT)                              # calculating osmotic pressure for the given phiw
-        Pi_div_DLP_arr = deepcopy(Pi_arr)/cond_GT['DLP']
+        Pi_div_DLP_arr = Pi_arr/cond_GT['DLP']
+        av_Pi = length_average_f(z_arr, Pi_arr, cond_GT['L'], cond_GT['dz'])
+        print('<Pi>/DTP_PS=%4.3e'%(av_Pi/cond_GT['DTP_PS']))
+        
         CT.gen_gpm_arr(+1.0, z_div_L_arr, dz_div_L, Pi_div_DLP_arr, k, gp_arr)
         CT.gen_gpm_arr(-1.0, z_div_L_arr, dz_div_L, Pi_div_DLP_arr, k, gm_arr)
         Gk_tmp = CT.get_Gk_boost(k, dz_div_L, Pi_div_DLP_arr, gp_arr[-1], gm_arr[-1])
@@ -144,8 +155,8 @@ else:
         #     gm_arr[i] = CT.get_gpm(-1.0, z_div_L_arr[i], dz_div_L, Pi_div_DLP_arr, k)
         #     # gp_arr[i] = CT.get_gpm(z_arr[i], dz, +1.0, Pi_arr, k, cond_PS['L'])
         #     # gm_arr[i] = CT.get_gpm(z_arr[i], dz, -1.0, Pi_arr, k, cond_PS['L'])
-        cond_CT = CT.get_cond(cond_PS, a_particle, Va, kT, dz, Pi_arr, Gk_tmp)                # update conditions for CT
-        cond_GT = GT.get_cond(cond_CT, phi_bulk, epsilon_d, dr, dz, cond_GT['gamma'], weight) # update conditions for GT
+        cond_CT = CT.get_cond(cond_PS, phi_bulk, a_particle, a_H, Va, kT, dz, Gk_tmp)                # update conditions for CT
+        cond_GT = GT.get_cond(cond_CT, dr, weight) # update conditions for GT
         cond_GT['k'] = cond_GT['k'] * eta_div_eta0_SPHS(phi_b, cond_GT)               # update the dimensionless value k
 
         # phiw_set_2= phiw_update(cond_GT, Pi_arr, fcn_Dc_given, fcn_eta_given,\
