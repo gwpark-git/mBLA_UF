@@ -52,16 +52,13 @@ def get_cond(pre_cond, Pin, Pout, Pper): # conditions for pure solvent flow
     
     Ap = get_Apm(+1.0, k, alpha_ast, Pper/DLP)
     Am = get_Apm(-1.0, k, alpha_ast, Pper/DLP)
-    print ('Ap, Am : ', Ap, Am)
+    print ('A+ = %4.3e, A- = %4.3e'%(Ap, Am))
     cond = {'k':pre_cond['k'], 'Ap':Ap, 'Am':Am, 'Pin':Pin, 'Pout':Pout, 'Pper':Pper, 'DLP':DLP,\
            'R':pre_cond['R'], 'L':pre_cond['L'], 'Lp':pre_cond['Lp'], 'eta0':pre_cond['eta0'], \
             'u_HP':u_HP, 'vw0':vw0, 'alpha_ast':alpha_ast, 'beta_ast':beta_ast,\
             'Pper_div_DLP':Pper/DLP, 'COND':COND_TYPE}
     return cond
 
-## coefficients
-# def get_Apm(k, pm, P_in, P_out, P_per):
-#     return pm*(P_out - P_per - (P_in - P_per)*exp(-pm*k))/(2.*sinh(k))
 
 def get_Apm(pm, k, alpha_ast, Pper_div_DLP):
     """ Get dimensionless Apm using Eq. (32)
@@ -72,12 +69,6 @@ def get_Apm_conv(pm, cond):
     """ Convinience version for get_Apm using cond
     """
     return get_Apm(pm, cond['k'], cond['alpha_ast'], cond['Pper_div_DLP'])
-    
-
-## solutions
-# def get_P(r, z, cond):
-#     k=cond['k']; Pper = cond['Pper']; Ap = cond['Ap']; Am = cond['Am']; L = cond['L']
-#     return Pper + Ap*exp(k*z/L) + Am*exp(-k*z/L)
 
 def get_P(z_div_L, k, Ap, Am, Pper_div_DLP):
     """ Using Eq. (31) (the first expression)
@@ -102,12 +93,6 @@ def get_u_conv(r_div_R, z_div_L, cond):
     return get_u(r_div_R, z_div_L, cond['k'], cond['Ap'], cond['Am'])
 
 
-
-# def get_u(r, z, cond):
-#     k=cond['k']; Pper = cond['Pper']; Ap = cond['Ap']; Am = cond['Am']
-#     L = cond['L']; R = cond['R']; preU=cond['preU']
-#     return -preU * (1 - (r/R)**2.0)*(Ap*exp(k*z/L) - Am*exp(-k*z/L))
-
 def get_v(r_div_R, z_div_L, k, alpha_ast, Ap, Am):
     """ Using Eq. (31) (the third expression)
     """
@@ -120,13 +105,6 @@ def get_v(r_div_R, z_div_L, k, alpha_ast, Ap, Am):
 def get_v_conv(r_div_R, z_div_L, cond):
     return get_v(r_div_R, z_div_L, cond['k'], cond['alpha_ast'], cond['Ap'], cond['Am'])
 
-# def get_v(r, z, cond):
-#     k=cond['k']; Pper = cond['Pper']; Ap = cond['Ap']; Am = cond['Am']
-#     L = cond['L']; R = cond['R']; preU=cond['preU']; Lp=cond['Lp']    
-#     return Lp*(2.*(r/R) - (r/R)**3.0)*(Ap*exp(k*z/L)+Am*exp(-k*z/L))
-
-
-# different operating conditions
 
 def get_Pin(DLP, Pout):
     return DLP + Pout
