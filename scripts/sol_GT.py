@@ -58,8 +58,8 @@ def get_u(r_div_R, z_div_L, k, Bp, Bm, gp, gm, int_Y):
     # int_Y = INT_Ieta_yt_with_fixed_z(y_div_R) # for variable y, we should use the interpolation function
     
     uR = (1. + r_div_R)*int_Y
-    uZ_out = -k*(exp(k*z_div_L)*(Bp + (k/2.)*gm) \
-                 - exp(-k*z_div_L)*(Bm + (k/2.)*gp))
+    uZ_out = -k*(exp(k*z_div_L)*(Bp + gm) \
+                 - exp(-k*z_div_L)*(Bm + gp))
 
     return uZ_out * uR
 

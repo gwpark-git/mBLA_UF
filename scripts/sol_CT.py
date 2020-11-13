@@ -149,8 +149,8 @@ def get_P(r_div_R, z_div_L, Pper_div_DLP, k, Bp, Bm, gp, gm):
     because P = Pout in Eq. (49)        
     """
     return Pper_div_DLP\
-        + exp(k*z_div_L)*(Bp + (k/2.)*gm)\
-        + exp(-k*z_div_L)*(Bm + (k/2.)*gp)
+        + exp(k*z_div_L)*(Bp + gm)\
+        + exp(-k*z_div_L)*(Bm + gp)
 
 def get_P_conv(r_div_R, z_div_L, cond_CT, gp, gm):
     return get_P(r_div_R, z_div_L, cond_CT['Pper_div_DLP'], cond_CT['k'], cond_CT['Bp'], cond_CT['Bm'], gp, gm)
@@ -161,8 +161,8 @@ def get_u(r_div_R, z_div_L, k, Bp, Bm, gp, gm):
     give the same expression as u^out in Eq. (45)
     """
     uR_HP = 1. - r_div_R**2.0
-    uZ_out = -k*(exp( k*z_div_L)*(Bp + (k/2.)*gm) \
-                 -exp(-k*z_div_L)*(Bm + (k/2.)*gp))
+    uZ_out = -k*(exp( k*z_div_L)*(Bp + gm) \
+                 -exp(-k*z_div_L)*(Bm + gp))
     return uZ_out*uR_HP
 
 def get_u_conv(r_div_R, z_div_L, cond_CT, gp, gm):
@@ -178,8 +178,8 @@ def get_v(r_div_R, z_div_L, Pi_div_DLP, k, alpha_ast, Bp, Bm, gp, gm):
     """
     sign = +1.
     vR = 2.*r_div_R - r_div_R**3.0
-    vw =(exp( k*z_div_L)*(Bp + (k/2.)*gm)\
-         +exp(-k*z_div_L)*(Bm + (k/2.)*gp)\
+    vw =(exp( k*z_div_L)*(Bp + gm)\
+         +exp(-k*z_div_L)*(Bm + gp)\
          -Pi_div_DLP)/alpha_ast
     return sign*vR*vw
 
