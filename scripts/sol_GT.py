@@ -50,6 +50,14 @@ def get_P(r_div_R, z_div_L, Pper_div_DLP, k, Bp, Bm, gp, gm):
     return CT.get_P(r_div_R, z_div_L, Pper_div_DLP, k, Bp, Bm, gp, gm)
 
 
+def get_uZ_out(z_div_L, k, Bp, Bm, gp, gm):
+    """ Using expression below Eq. (45):
+    uZ_out(z) = -dP_out(z)/dz
+    """
+    uZ_out = -k*(exp(k*z_div_L)*(Bp + gm) \
+                 - exp(-k*z_div_L)*(Bm + gp))
+    return uZ_out
+
 def get_u(r_div_R, z_div_L, k, Bp, Bm, gp, gm, int_Y):
     """ Using expressions u in Eq. (45) 
     and integrate 1/eta from r to 1 is reversed from 0 to y (sign change is already applied)
@@ -330,7 +338,8 @@ def gen_new_phiw_div_phib_arr(phiw_div_phib_arr_new, cond_GT, fcn_D, fcn_eta, z_
     gen_INT_inv_f_wrt_yt(yt_arr, phi_arr_z0, Ieta_arr_z0, fcn_eta, cond_GT)
     gen_INT_inv_f_wrt_yt(yt_arr, phi_arr_z0, ID_arr_z0, fcn_D, cond_GT)
 
-    uZ_z0 = get_u_conv(r0_div_R, z0_div_L, cond_GT, gp_arr[ind_z0], gm_arr[ind_z0], Ieta_arr_z0[-1])
+    # uZ_z0 = get_u_conv(r0_div_R, z0_div_L, cond_GT, gp_arr[ind_z0], gm_arr[ind_z0], Ieta_arr_z0[-1])
+    uZ_z0 = get_uZ_out(z0_div_L, cond_GT['k'], cond_GT['Bp'], cond_GT['Bm'], gp_arr[ind_z0], gm_arr[ind_z0])
     F2_0 = cal_F2_0(vw_div_vw0_z0, ed, yt_arr, Ieta_arr_z0, ID_arr_z0, uZ_z0)
 
     Nz = size(z_div_L_arr)
@@ -339,7 +348,8 @@ def gen_new_phiw_div_phib_arr(phiw_div_phib_arr_new, cond_GT, fcn_D, fcn_eta, z_
         gen_phi_wrt_yt(z_div_L_arr[i], phiw_div_phib_arr[i]*phi_b, fcn_D, vw_div_vw0_zi, yt_arr, phi_arr_zi, cond_GT)
         gen_INT_inv_f_wrt_yt(yt_arr, phi_arr_zi, Ieta_arr_zi, fcn_eta, cond_GT)
         gen_INT_inv_f_wrt_yt(yt_arr, phi_arr_zi, ID_arr_zi, fcn_D, cond_GT)
-        uZ_zi = get_u_conv(r0_div_R, z_div_L_arr[i], cond_GT, gp_arr[i], gm_arr[i], Ieta_arr_zi[-1])
+        # uZ_zi = get_u_conv(r0_div_R, z_div_L_arr[i], cond_GT, gp_arr[i], gm_arr[i], Ieta_arr_zi[-1])
+        uZ_zi = get_uZ_out(z_div_L_arr[i], cond_GT['k'], cond_GT['Bp'], cond_GT['Bm'], gp_arr[i], gm_arr[i])
         
         phiw_div_phib_arr_new[i] = cal_int_Fz(F2_0, vw_div_vw0_zi, ed, yt_arr, Ieta_arr_zi, ID_arr_zi, uZ_zi)
 
