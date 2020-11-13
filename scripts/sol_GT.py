@@ -12,8 +12,10 @@
 # calculating semi-analytic matched asymtptoic solution
 
 from numpy import *
+from aux_functions import *
 import sol_CT as CT
 from scipy.interpolate import interp1d
+from copy import deepcopy
 
 def get_cond(cond_CT, dr, weight):
     if (cond_CT['COND'] != 'CT'):
@@ -54,7 +56,7 @@ def get_u(r_div_R, z_div_L, k, Bp, Bm, gp, gm, int_Y):
     u_Z^out is given in following Eq. (45)
     """
     
-    y_div_R = 1. - r_div_R
+    # y_div_R = 1. - r_div_R
     # int_Y = INT_Ieta_yt_with_fixed_z(y_div_R) # for variable y, we should use the interpolation function
     
     uR = (1. + r_div_R)*int_Y
@@ -175,12 +177,13 @@ def gen_INT_inv_f_wrt_yt(yt_arr, phi_arr, INT_inv_f_arr, f_given, cond_GT):
         dy = yt_arr[i]  - yt_arr[i-1]
         tmp_f1 = tmp_f2
         tmp_f2 = 1./f_given(phi_arr[i], cond_GT)
-        INT_inv_f_arr[i] = INT_inv_f_arr[i-1] + 0.5*dy*(tmp_f1 + tmp_f2)
+        re += 0.5 * dy * (tmp_f1 + tmp_f2)
+        INT_inv_f_arr[i] = re
     return 0
 
 
 def cal_F2_0(vw_div_vw0_z0, ed, yt_arr, Ieta_arr_z0, ID_arr_z0, uZ_z0):
-    """ Calculate F2_0 for cal_int_Fz
+    """ [Overhead version] Calculate F2_0 for cal_int_Fz
     This is decoupled from cal_int_Fz for z>0 because the value F2_0 will be used for calculating F2_Z for all z>0.
     Therefore, this additional help function will reduce the overhead of calculation, even though the real function is just a part of cal_int_Fz.
 
@@ -198,6 +201,53 @@ def cal_F2_0(vw_div_vw0_z0, ed, yt_arr, Ieta_arr_z0, ID_arr_z0, uZ_z0):
 
     re_F2_0 *= uZ_z0
     return re_F2_0
+
+def cal_F2_Z(vw_div_vw0, ed, yt_arr, Ieta_arr, ID_arr, uZ_zi):
+    """ [Overhead version] Calculate F2_Z defined in cal_int_Fz
+    This function will calculate T_z[1-s_bar * e^{s_bar}] independently from cal_int_Fz.
+    This might be useful for the analysis of the data.
+    """
+    re_F2_Z = 0.
+    tmp_F2_Z_1 = (1. - yt_arr[0])*(2. - yt_arr[0])*(1. - Ieta_arr[0]*exp(-(vw_div_vw0/ed)*ID_arr[0])*((vw_div_vw0/ed)*ID_arr[0]))
+    tmp_F2_Z_2 = tmp_F2_Z_1
+
+    for i in range(1, size(yt_arr)):
+        dy = yt_arr[i] - yt_arr[i-1]
+
+        tmp_F2_Z_1 = tmp_F2_Z_2
+        tmp_F2_Z_2 = (1. - yt_arr[i])*(2. - yt_arr[i])*Ieta_arr[i]*(1. - exp(-(vw_div_vw0/ed)*ID_arr[i])*((vw_div_vw0/ed)*ID_arr[i]))
+        re_F2_Z += 0.5 * dy * (tmp_F2_Z_1 + tmp_F2_Z_2)
+        
+    return re_F2_Z * uZ_zi
+
+def cal_F1_Z(vw_div_vw0, ed, yt_arr, Ieta_arr, ID_arr, uZ_zi):
+    """ [Overhead version] Calculate F1_Z defined in cal_int_Fz
+    This function will calculate T_z[e^{s_bar}] independently from cal_int_Fz.
+    This might be useful for the analysis of the data.
+    """
+    re_F1_Z = 0.
+    tmp_F1_Z_1 = (1. - yt_arr[0])*(2. - yt_arr[0])*Ieta_arr[0]*exp(-(vw_div_vw0/ed)*ID_arr[0])
+    tmp_F1_Z_2 = tmp_F1_Z_1
+
+    for i in range(1, size(yt_arr)):
+        dy = yt_arr[i] - yt_arr[i-1]
+        tmp_F1_Z_1 = tmp_F1_Z_2
+        tmp_F1_Z_2 = (1. - yt_arr[i])*(2. - yt_arr[i])*Ieta_arr[i]*exp(-(vw_div_vw0/ed)*ID_arr[i])
+        re_F1_Z += 0.5 * dy * (tmp_F1_Z_1 + tmp_F1_Z_2)
+        
+    return re_F1_Z * uZ_zi
+
+def cal_Phi_div_Phiast_conv(phiw, phi_bulk, F1_Z, F2_Z):
+    """ [Auxiliary function] Calculate Phi(z)/Phi_ast using definition of F1_Z and F2_Z in cal_int_Fz, and Eqs. (49), (50), (D1).
+    The original definition of Phi(z) in Eq. (50) is divided by Phi_ast=pi*R^2*phi_bulk*u_HP in accordance with caption of Fig. 11.
+    By definition of T_z[phi] in Eq. (D1), Phi(z)/Phi_ast = (2/phi_bulk)*T_z[phi].
+    By definition of matched asymptotic phi in Eq. (49), phi = (phiw - phi_bulk)*exp(-s_bar) + phi_bulk*(1 - s_bar*exp(-s_bar)).
+    Therefore, we have Phi(z)/Phi_ast = (2/phi_bulk)*((phiw - phi_bulk)*F1_Z + phi_bulk*F2_Z),
+    where F1_Z and F2_Z are defined on cal_int_Fz function.
+    """
+    return (2./phi_bulk)*((phiw-phi_bulk)*F1_Z + phi_bulk*F2_Z)
+
+
 
 def cal_int_Fz(given_re_F2_0, vw_div_vw0, ed, yt_arr, Ieta_arr, ID_arr, uZ_zi):
     # ref: process_at_z_modi
@@ -283,7 +333,8 @@ def gen_new_phiw_div_phib_arr(phiw_div_phib_arr_new, cond_GT, fcn_D, fcn_eta, z_
     uZ_z0 = get_u_conv(r0_div_R, z0_div_L, cond_GT, gp_arr[ind_z0], gm_arr[ind_z0], Ieta_arr_z0[-1])
     F2_0 = cal_F2_0(vw_div_vw0_z0, ed, yt_arr, Ieta_arr_z0, ID_arr_z0, uZ_z0)
 
-    for i in range(1, size(z_div_L_arr)):
+    Nz = size(z_div_L_arr)
+    for i in range(1, Nz):
         vw_div_vw0_zi = get_v_conv(rw_div_R, z_div_L_arr[i], Pi_div_DLP_arr[i], cond_GT, gp_arr[i], gm_arr[i])
         gen_phi_wrt_yt(z_div_L_arr[i], phiw_div_phib_arr[i]*phi_b, fcn_D, vw_div_vw0_zi, yt_arr, phi_arr_zi, cond_GT)
         gen_INT_inv_f_wrt_yt(yt_arr, phi_arr_zi, Ieta_arr_zi, fcn_eta, cond_GT)
@@ -292,13 +343,10 @@ def gen_new_phiw_div_phib_arr(phiw_div_phib_arr_new, cond_GT, fcn_D, fcn_eta, z_
         
         phiw_div_phib_arr_new[i] = cal_int_Fz(F2_0, vw_div_vw0_zi, ed, yt_arr, Ieta_arr_zi, ID_arr_zi, uZ_zi)
 
+    # print(phiw_div_phib_arr[-1]*phi_b, phiw_div_phib_arr_new[-1]*phi_b)
     FPI_operator(cond_GT['weight'], phiw_div_phib_arr, phiw_div_phib_arr_new)
-
-    # # this part is for recording the analysis part
-    # ind_max_z = argmax(phiw_div_phib_arr_new)
-    # report_n_iter[1] = z_div_L_arr[ind_max_z]*cond_GT['L']
-    # report_n_iter[2] = phiw[ind_max_z]
-    # report_n_iter[3] = phiw[-1]
+    # print(phiw_div_phib_arr_new[-1]*phi_b)
+    
     
     return 0
 

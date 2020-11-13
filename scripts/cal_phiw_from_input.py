@@ -139,13 +139,12 @@ else:
     print_summary(cond_GT)
     print ('\nCalculating...\n')
 
-    
+    # Pi_div_DLP_arr_new = deepcopy(Pi_div_DLP_arr)
     for n in range(N_iter):                                                           # main iterator with number n
         phiw_set_1 = deepcopy(phiw_set_2)                                             # reduced wall concentration inherited from the previous iteration
-        Pi_arr = fcn_Pi_given(phiw_set_1*phi_b, cond_GT)                              # calculating osmotic pressure for the given phiw
-        Pi_div_DLP_arr = Pi_arr/cond_GT['DLP']
-        av_Pi = length_average_f(z_arr, Pi_arr, cond_GT['L'], cond_GT['dz'])
-        print('<Pi>/DTP_PS=%4.3e'%(av_Pi/cond_GT['DTP_PS']))
+        # Pi_div_DLP_arr = deepcopy(Pi_div_DLP_arr_new)
+        # av_Pi = length_average_f(z_arr, Pi_arr, cond_GT['L'], cond_GT['dz'])
+        # print('<Pi>/DTP_PS=%4.3e'%(av_Pi/cond_GT['DTP_PS']))
         
         CT.gen_gpm_arr(+1.0, z_div_L_arr, Pi_div_DLP_arr, k, gp_arr)
         CT.gen_gpm_arr(-1.0, z_div_L_arr, Pi_div_DLP_arr, k, gm_arr)
@@ -161,20 +160,48 @@ else:
 
         # phiw_set_2= phiw_update(cond_GT, Pi_arr, fcn_Dc_given, fcn_eta_given,\
         #                         z_arr, phiw_set_1, weight, gp_arr, gm_arr, y_div_R_arr)    # main FPI iterator
-        # report_n_iter = zeros(12)
-        # report_n_iter[0] = n
+        report_step = zeros(12)
+        report_step[0] = n
         phiw_update(phiw_set_2, cond_GT, fcn_Dc_given, fcn_eta_given, z_div_L_arr, phiw_set_1, Pi_div_DLP_arr, cond_GT['weight'], gp_arr, gm_arr, y_div_R_arr)
+
+        Pi_arr = fcn_Pi_given(phiw_set_1*phi_b, cond_GT)                              # calculating osmotic pressure for the given phiw
+        Pi_div_DLP_arr = Pi_arr/cond_GT['DLP']
+
+        # this part is for recording the analysis part
+
+        
+        ind_max_z = argmax(phiw_set_2)
+        err = norm(phiw_set_1 - phiw_set_2)                                           # estimated deviations
+        report_step[1] = z_div_L_arr[ind_max_z]*cond_GT['L']
+        report_step[2] = phiw_set_2[ind_max_z]*cond_GT['phi_bulk']
+        report_step[3] = phiw_set_2[-1]*cond_GT['phi_bulk']
+
+        r0_div_R = 0.; L_div_L = 1.
+        dz_div_L = cond_GT['dz']/cond_GT['L']
+        # print('n_iter=%d (reference values: L=%4.3f, DTP_HP=%4.3e, Phi_ast=not_defined_yet)'%(report_step[0], cond_GT['L'], cond_GT['DTP_HP']))
+        # print('\tz_max=%4.3f, phiw(z_max)=%4.3e, phiw(L)=%4.3e'%(report_step[1], report_step[2], report_step[3]))
+
+        report_step[4] = length_average_f(z_div_L_arr, Pi_div_DLP_arr, L_div_L, dz_div_L)*cond_GT['DLP']/cond_GT['DTP_HP']
+
+        report_P_div_DLP_arr = zeros(Nz)
+        for i in range(Nz):
+            report_P_div_DLP_arr[i] = GT.get_P_conv(r0_div_R, z_div_L_arr[i], cond_GT, gp_arr[i], gm_arr[i])
+
+        report_step[5] = length_average_f(z_div_L_arr, report_P_div_DLP_arr, L_div_L, dz_div_L)*cond_GT['DLP']/cond_GT['DTP_HP']
+        print('iter=%d, norm(phiw_set_1-phiw_set_2)=%4.3e (reference values: L=%4.3f, DTP_HP=%4.3e, Phi_ast=not_defined_yet)'%(report_step[0], err, cond_GT['L'], cond_GT['DTP_HP']))
+        print('\tz_max=%4.3f, phiw(z_max)=%.4f, phiw(L)=%.4f\n\t<Pi>(pre)/DTP_HP=%4.3e, DTP(pre)/DTP_HP=%4.3e'%(report_step[1], report_step[2], report_step[3], report_step[4], report_step[5]))
+        print()
+        
         # print(phiw_set_2)
         
         # if IDENT_verbose:                                                             # the case when each steps will be printed out
         #     fn_ver = fn_out + '.%05d'%(n + 1)
         #     gen_analysis(z_arr, y_div_R_arr, phiw_set_2*phi_b, cond_GT, fcn_Pi_given, fcn_Dc_given, fcn_eta_given, fn_ver)
             
-        ind_max = argmax(phiw_set_2)                                                  # get index number for the maximum values of phiw(z)
-        print ('n=%d, phiw/b(0)=%4.3f, phiw/b(L)=%4.3f, max:(phiw(%4.3f)/b)=%4.3f'%(n, phiw_set_2[0], phiw_set_2[-1], z_arr[ind_max], phiw_set_2[ind_max]))
+        # ind_max = argmax(phiw_set_2)                                                  # get index number for the maximum values of phiw(z)
+        # print ('n=%d, phiw/b(0)=%4.3f, phiw/b(L)=%4.3f, max:(phiw(%4.3f)/b)=%4.3f'%(n, phiw_set_2[0], phiw_set_2[-1], z_arr[ind_max], phiw_set_2[ind_max]))
 
-        err = norm(phiw_set_1 - phiw_set_2)                                           # estimated deviations
-        print ('norm(p1-p2) : %4.3e, weight : %4.3f\n'%(err, weight))
+        # print ('norm(p1-p2) : %4.3e, weight : %4.3f\n'%(err, weight))
 
         if(n == N_iter-1):
             re[:, 0] = z_arr
