@@ -117,10 +117,13 @@ def cal_f_RK(yt, dyt, f, df, int_INV_D_pre, vw_div_vw0, fcn_D, cond_GT):
     """ Auxiliary function for Runge-Kutta method to generate matched asymptotic phi
     The complication of input arguments and result are due to the implicit expression of phi,
     which is described in help-doc in gen_phi_wrt_yt function.
+
+    Note that the return value is related with d_phi/d_y_tilde = (1/epsilon_d)*d_phi/d_y_bar = (1/epsilon_d)*vw/D*(phi - phi_b*(1-exp(-s_bar)))
+
     """
     phi_b = cond_GT['phi_bulk']
     ed = cond_GT['epsilon_d']
-    
+
     y_new = yt + dyt
     f_new = f + df
     int_INV_D = int_INV_D_pre
@@ -190,25 +193,25 @@ def gen_INT_inv_f_wrt_yt(yt_arr, phi_arr, INT_inv_f_arr, f_given, cond_GT):
     return 0
 
 
-def cal_F2_0(vw_div_vw0_z0, ed, yt_arr, Ieta_arr_z0, ID_arr_z0, uZ_z0):
-    """ [Overhead version] Calculate F2_0 for cal_int_Fz
-    This is decoupled from cal_int_Fz for z>0 because the value F2_0 will be used for calculating F2_Z for all z>0.
-    Therefore, this additional help function will reduce the overhead of calculation, even though the real function is just a part of cal_int_Fz.
+# def cal_F2_0(vw_div_vw0_z0, ed, yt_arr, Ieta_arr_z0, ID_arr_z0, uZ_z0):
+#     """ [Overhead version] Calculate F2_0 for cal_int_Fz
+#     This is decoupled from cal_int_Fz for z>0 because the value F2_0 will be used for calculating F2_Z for all z>0.
+#     Therefore, this additional help function will reduce the overhead of calculation, even though the real function is just a part of cal_int_Fz.
 
-    """
-    re_F2_0 = 0.
-    tmp_F2_0_1 = (1. - yt_arr[0])*(2. - yt_arr[0])*(1. - Ieta_arr_z0[0]*exp(-(vw_div_vw0_z0/ed)*ID_arr_z0[0])*((vw_div_vw0_z0/ed)*ID_arr_z0[0]))
-    tmp_F2_0_2 = tmp_F2_0_1
+#     """
+#     re_F2_0 = 0.
+#     tmp_F2_0_1 = (1. - yt_arr[0])*(2. - yt_arr[0])*Ieta_arr_z0[0]*(1. - exp(-(vw_div_vw0_z0/ed)*ID_arr_z0[0])*((vw_div_vw0_z0/ed)*ID_arr_z0[0]))
+#     tmp_F2_0_2 = tmp_F2_0_1
 
-    for i in range(1, size(yt_arr)):
-        dy = yt_arr[i] - yt_arr[i-1]
+#     for i in range(1, size(yt_arr)):
+#         dy = yt_arr[i] - yt_arr[i-1]
 
-        tmp_F2_0_1 = tmp_F2_0_2
-        tmp_F2_0_2 = (1. - yt_arr[i])*(2. - yt_arr[i])*Ieta_arr_z0[i]*(1. - exp(-(vw_div_vw0_z0/ed)*ID_arr_z0[i])*((vw_div_vw0_z0/ed)*ID_arr_z0[i]))
-        re_F2_0 += 0.5 * dy * (tmp_F2_0_1 + tmp_F2_0_2)
+#         tmp_F2_0_1 = tmp_F2_0_2
+#         tmp_F2_0_2 = (1. - yt_arr[i])*(2. - yt_arr[i])*Ieta_arr_z0[i]*(1. - exp(-(vw_div_vw0_z0/ed)*ID_arr_z0[i])*((vw_div_vw0_z0/ed)*ID_arr_z0[i]))
+#         re_F2_0 += 0.5 * dy * (tmp_F2_0_1 + tmp_F2_0_2)
 
-    re_F2_0 *= uZ_z0
-    return re_F2_0
+#     re_F2_0 *= uZ_z0
+#     return re_F2_0
 
 def cal_F2_Z(vw_div_vw0, ed, yt_arr, Ieta_arr, ID_arr, uZ_zi):
     """ [Overhead version] Calculate F2_Z defined in cal_int_Fz
@@ -216,7 +219,7 @@ def cal_F2_Z(vw_div_vw0, ed, yt_arr, Ieta_arr, ID_arr, uZ_zi):
     This might be useful for the analysis of the data.
     """
     re_F2_Z = 0.
-    tmp_F2_Z_1 = (1. - yt_arr[0])*(2. - yt_arr[0])*(1. - Ieta_arr[0]*exp(-(vw_div_vw0/ed)*ID_arr[0])*((vw_div_vw0/ed)*ID_arr[0]))
+    tmp_F2_Z_1 = (1. - yt_arr[0])*(2. - yt_arr[0])*Ieta_arr[0]*(1. - exp(-(vw_div_vw0/ed)*ID_arr[0])*((vw_div_vw0/ed)*ID_arr[0]))
     tmp_F2_Z_2 = tmp_F2_Z_1
 
     for i in range(1, size(yt_arr)):
@@ -273,7 +276,7 @@ def cal_int_Fz(given_re_F2_0, vw_div_vw0, ed, yt_arr, Ieta_arr, ID_arr, uZ_zi):
     tmp_F1_Z_2 = tmp_F1_Z_1
     
     re_F2_Z = 0.
-    tmp_F2_Z_1 = (1. - yt_arr[0])*(2. - yt_arr[0])*(1. - Ieta_arr[0]*exp(-(vw_div_vw0/ed)*ID_arr[0])*((vw_div_vw0/ed)*ID_arr[0]))
+    tmp_F2_Z_1 = (1. - yt_arr[0])*(2. - yt_arr[0])*Ieta_arr[0]*(1. - exp(-(vw_div_vw0/ed)*ID_arr[0])*((vw_div_vw0/ed)*ID_arr[0]))
     tmp_F2_Z_2 = tmp_F2_Z_1
 
     for i in range(1, size(yt_arr)):
@@ -291,7 +294,7 @@ def cal_int_Fz(given_re_F2_0, vw_div_vw0, ed, yt_arr, Ieta_arr, ID_arr, uZ_zi):
     re_F2_Z *= uZ_zi
     return 1. + (given_re_F2_0 - re_F2_Z)/re_F1_Z
 
-def FPI_operator(weight, val_pre, val_new):
+def FPI_operator(weight, val_pre, val_new, N_skip=0):
     """ val_new = (1. - weight)*val_pre + weight*val_new
     Applying operator for the fixed-point iteration
     Here the notation is simply by
@@ -306,7 +309,7 @@ def FPI_operator(weight, val_pre, val_new):
 
     Output: overwrite val_new (without return value)
     """
-    for i in range(size(val_pre)):
+    for i in range(N_skip, size(val_pre)):
         val_new[i] = (1. - weight)*val_pre[i] + weight*val_new[i]
     return 0
 
@@ -340,7 +343,7 @@ def gen_new_phiw_div_phib_arr(phiw_div_phib_arr_new, cond_GT, fcn_D, fcn_eta, z_
 
     # uZ_z0 = get_u_conv(r0_div_R, z0_div_L, cond_GT, gp_arr[ind_z0], gm_arr[ind_z0], Ieta_arr_z0[-1])
     uZ_z0 = get_uZ_out(z0_div_L, cond_GT['k'], cond_GT['Bp'], cond_GT['Bm'], gp_arr[ind_z0], gm_arr[ind_z0])
-    F2_0 = cal_F2_0(vw_div_vw0_z0, ed, yt_arr, Ieta_arr_z0, ID_arr_z0, uZ_z0)
+    F2_0 = cal_F2_Z(vw_div_vw0_z0, ed, yt_arr, Ieta_arr_z0, ID_arr_z0, uZ_z0)
 
     Nz = size(z_div_L_arr)
     for i in range(1, Nz):
@@ -354,7 +357,7 @@ def gen_new_phiw_div_phib_arr(phiw_div_phib_arr_new, cond_GT, fcn_D, fcn_eta, z_
         phiw_div_phib_arr_new[i] = cal_int_Fz(F2_0, vw_div_vw0_zi, ed, yt_arr, Ieta_arr_zi, ID_arr_zi, uZ_zi)
 
     # print(phiw_div_phib_arr[-1]*phi_b, phiw_div_phib_arr_new[-1]*phi_b)
-    FPI_operator(cond_GT['weight'], phiw_div_phib_arr, phiw_div_phib_arr_new)
+    FPI_operator(cond_GT['weight'], phiw_div_phib_arr, phiw_div_phib_arr_new, N_skip=1) # phiw(0) must be phib.
     # print(phiw_div_phib_arr_new[-1]*phi_b)
     
     
