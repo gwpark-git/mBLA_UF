@@ -293,6 +293,13 @@ def gen_new_phiw_div_phib_arr(phiw_div_phib_arr_new, cond_GT, fcn_D, fcn_eta, z_
         phiw_div_phib_arr_new[i] = cal_int_Fz(F2_0, vw_div_vw0_zi, ed, yt_arr, Ieta_arr_zi, ID_arr_zi, uZ_zi)
 
     FPI_operator(cond_GT['weight'], phiw_div_phib_arr, phiw_div_phib_arr_new)
+
+    # # this part is for recording the analysis part
+    # ind_max_z = argmax(phiw_div_phib_arr_new)
+    # report_n_iter[1] = z_div_L_arr[ind_max_z]*cond_GT['L']
+    # report_n_iter[2] = phiw[ind_max_z]
+    # report_n_iter[3] = phiw[-1]
+    
     return 0
 
 

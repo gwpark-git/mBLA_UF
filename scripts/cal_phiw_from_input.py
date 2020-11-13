@@ -104,7 +104,7 @@ else:
     Pi_arr = zeros(size(phiw_arr))                                     # calculating osmotic pressure using initial conditions
     Pi_div_DLP_arr = Pi_arr/cond_PS['DLP']
     
-    Gk_tmp = CT.get_Gk(cond_PS['k'], dz/L_channel, Pi_div_DLP_arr)
+    Gk_tmp = CT.get_Gk(cond_PS['k'], dz_div_L, Pi_div_DLP_arr)
     cond_CT = CT.get_cond(cond_PS, phi_bulk, a_particle, a_H, Va, kT, dz, Gk_tmp)     # allocating conditions for the constant transport properties
     cond_GT = GT.get_cond(cond_CT, dr, weight) # allocating conditions for the general transport properties
     
@@ -147,9 +147,9 @@ else:
         av_Pi = length_average_f(z_arr, Pi_arr, cond_GT['L'], cond_GT['dz'])
         print('<Pi>/DTP_PS=%4.3e'%(av_Pi/cond_GT['DTP_PS']))
         
-        CT.gen_gpm_arr(+1.0, z_div_L_arr, dz_div_L, Pi_div_DLP_arr, k, gp_arr)
-        CT.gen_gpm_arr(-1.0, z_div_L_arr, dz_div_L, Pi_div_DLP_arr, k, gm_arr)
-        Gk_tmp = CT.get_Gk_boost(k, dz_div_L, Pi_div_DLP_arr, gp_arr[-1], gm_arr[-1])
+        CT.gen_gpm_arr(+1.0, z_div_L_arr, Pi_div_DLP_arr, k, gp_arr)
+        CT.gen_gpm_arr(-1.0, z_div_L_arr, Pi_div_DLP_arr, k, gm_arr)
+        Gk_tmp = CT.get_Gk_boost(k, dz_div_L, gp_arr[-1], gm_arr[-1])
         # for i in range(Nz):                                                           # generating g+(z) and g-(z) functions
         #     gp_arr[i] = CT.get_gpm(+1.0, z_div_L_arr[i], dz_div_L, Pi_div_DLP_arr, k)
         #     gm_arr[i] = CT.get_gpm(-1.0, z_div_L_arr[i], dz_div_L, Pi_div_DLP_arr, k)
@@ -161,6 +161,8 @@ else:
 
         # phiw_set_2= phiw_update(cond_GT, Pi_arr, fcn_Dc_given, fcn_eta_given,\
         #                         z_arr, phiw_set_1, weight, gp_arr, gm_arr, y_div_R_arr)    # main FPI iterator
+        # report_n_iter = zeros(12)
+        # report_n_iter[0] = n
         phiw_update(phiw_set_2, cond_GT, fcn_Dc_given, fcn_eta_given, z_div_L_arr, phiw_set_1, Pi_div_DLP_arr, cond_GT['weight'], gp_arr, gm_arr, y_div_R_arr)
         # print(phiw_set_2)
         

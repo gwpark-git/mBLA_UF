@@ -55,6 +55,8 @@ def length_average_f(x_arr, f_arr, Lx, dx=0):
     return re/Lx
 
 
+# def report_step(z_arr, phiw_arr, Pi_arr, 
+
 def get_psi(s_bar, phi_b, phi_w): 
     """Return psi 
         psi = particle distribution function along y in Eq. (55)
@@ -128,8 +130,8 @@ def gen_analysis(z_arr, yt_arr, phiw_arr, cond_GT, fcn_Pi, fcn_Dc_given, fcn_eta
     for i in range(Nz):
         # gp_arr[i] = get_gpm(z_arr[i], dz, +1.0, Pi_arr, cond_GT['k'], cond_GT['L'])
         # gm_arr[i] = get_gpm(z_arr[i], dz, -1.0, Pi_arr, cond_GT['k'], cond_GT['L'])
-        CT.gen_gpm_arr(+1.0, z_div_L_arr, dz_div_L, Pi_div_DLP_arr, k, gp_arr)
-        CT.gen_gpm_arr(-1.0, z_div_L_arr, dz_div_L, Pi_div_DLP_arr, k, gm_arr)
+        CT.gen_gpm_arr(+1.0, z_div_L_arr, Pi_div_DLP_arr, k, gp_arr)
+        CT.gen_gpm_arr(-1.0, z_div_L_arr, Pi_div_DLP_arr, k, gm_arr)
         
         phi_arr = zeros(Ny)
         Ieta_arr = zeros(Ny)
