@@ -61,7 +61,7 @@ def get_cond(pre_cond, Pin, Pout, Pper): # conditions for pure solvent flow
     
     DLP = Pin - Pout                    # Longitudinal pressure difference
     DTP_HP = cal_DTP_HP(Pin, Pout, Pper) # Length-averaged TMP with linear pressure approximation in Eq. (8)
-    DTP_PS = cal_DTP_PS(Pin, Pout, Pper) # Length-averaged TMP for pure solvent flow in Eq. (7)
+    DTP_PS = cal_DTP_PS(Pin, Pout, Pper, k) # Length-averaged TMP for pure solvent flow in Eq. (7)
     vw0 = pre_cond['Lp']*DTP_HP         # v^\ast in Eq. (21)
     alpha_ast = DTP_HP/DLP              # alpha^\ast in Eq. (23)
     beta_ast = k**2.0 * alpha_ast       # beta^\ast in Eq. (24) and (26)

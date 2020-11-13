@@ -11,7 +11,7 @@ from numpy import *
 
 # Parameters for numerical computation
 
-N_iter = 3          # Maximum iteration for FPI
+N_iter = 100          # Maximum iteration for FPI
 weight = 0.1          # Relaxation factor for FPI
 Nz = 100              # Z-discritization number
 Nr = 100              # Bulk R-discritization number (note that the boundary-layer R-disc. has a different number)
