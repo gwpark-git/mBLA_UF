@@ -138,7 +138,8 @@ else:
     # print ('\tepsilon=%4.3e, epsilon_d=%4.3e (Pe_R=%.1f)'%(cond_GT['R']/cond_GT['L'], cond_GT['epsilon_d'], 1./cond_GT['epsilon_d']))
     print_summary(cond_GT)
     print ('\nCalculating...\n')
-
+    sign_plus = +1.
+    sign_minus = -1.
     # Pi_div_DLP_arr_new = deepcopy(Pi_div_DLP_arr)
     for n in range(N_iter):                                                           # main iterator with number n
         phiw_set_1 = deepcopy(phiw_set_2)                                             # reduced wall concentration inherited from the previous iteration
@@ -146,28 +147,33 @@ else:
         # av_Pi = length_average_f(z_arr, Pi_arr, cond_GT['L'], cond_GT['dz'])
         # print('<Pi>/DTP_PS=%4.3e'%(av_Pi/cond_GT['DTP_PS']))
         
-        CT.gen_gpm_arr(+1.0, z_div_L_arr, Pi_div_DLP_arr, k, gp_arr)
-        CT.gen_gpm_arr(-1.0, z_div_L_arr, Pi_div_DLP_arr, k, gm_arr)
-        Gk_tmp = CT.get_Gk_boost(k, dz_div_L, gp_arr[-1], gm_arr[-1])
+        CT.gen_gpm_arr(sign_plus,  z_div_L_arr, Pi_div_DLP_arr, k, gp_arr)
+        CT.gen_gpm_arr(sign_minus, z_div_L_arr, Pi_div_DLP_arr, k, gm_arr)
+        cond_GT['Gk'] = CT.get_Gk_boost(k, dz_div_L, gp_arr[-1], gm_arr[-1])
+        cond_GT['Bp'] = CT.get_Bpm_conv(sign_plus, cond_GT)
+        cond_GT['Bm'] = CT.get_Bpm_conv(sign_minus, cond_GT)
+        # cond_GT['Bp'] = CT.get_Bpm(sign_plus, cond_GT['k'], cond_GT['alpha_ast'], cond_GT['Gk'])
+        # cond_GT['Bm'] = CT.get_Bpm(sign_minus, cond_GT['k'], cond_GT['alpha_ast'], cond_GT['Gk'])
+        
         # for i in range(Nz):                                                           # generating g+(z) and g-(z) functions
         #     gp_arr[i] = CT.get_gpm(+1.0, z_div_L_arr[i], dz_div_L, Pi_div_DLP_arr, k)
         #     gm_arr[i] = CT.get_gpm(-1.0, z_div_L_arr[i], dz_div_L, Pi_div_DLP_arr, k)
         #     # gp_arr[i] = CT.get_gpm(z_arr[i], dz, +1.0, Pi_arr, k, cond_PS['L'])
         #     # gm_arr[i] = CT.get_gpm(z_arr[i], dz, -1.0, Pi_arr, k, cond_PS['L'])
-        cond_CT = CT.get_cond(cond_PS, phi_bulk, a_particle, a_H, Va, kT, dz, Gk_tmp)                # update conditions for CT
-        cond_GT = GT.get_cond(cond_CT, dr, weight) # update conditions for GT
-        cond_GT['k'] = cond_GT['k'] * eta_div_eta0_SPHS(phi_b, cond_GT)               # update the dimensionless value k
+        # cond_CT = CT.get_cond(cond_PS, phi_bulk, a_particle, a_H, Va, kT, dz, Gk_tmp)                # update conditions for CT
+        # cond_GT = GT.get_cond(cond_CT, dr, weight) # update conditions for GT
+        # cond_GT['k'] = cond_GT['k'] * eta_div_eta0_SPHS(phi_b, cond_GT)               # update the dimensionless value k
 
         # phiw_set_2= phiw_update(cond_GT, Pi_arr, fcn_Dc_given, fcn_eta_given,\
         #                         z_arr, phiw_set_1, weight, gp_arr, gm_arr, y_div_R_arr)    # main FPI iterator
-        report_step = zeros(12)
-        report_step[0] = n
         phiw_update(phiw_set_2, cond_GT, fcn_Dc_given, fcn_eta_given, z_div_L_arr, phiw_set_1, Pi_div_DLP_arr, cond_GT['weight'], gp_arr, gm_arr, y_div_R_arr)
 
-        Pi_arr = fcn_Pi_given(phiw_set_1*phi_b, cond_GT)                              # calculating osmotic pressure for the given phiw
+        Pi_arr = fcn_Pi_given(phiw_set_2*phi_b, cond_GT)                              # calculating osmotic pressure for the given phiw
         Pi_div_DLP_arr = Pi_arr/cond_GT['DLP']
 
         # this part is for recording the analysis part
+        report_step = zeros(12)
+        report_step[0] = n
 
         
         ind_max_z = argmax(phiw_set_2)

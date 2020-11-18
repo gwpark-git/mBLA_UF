@@ -78,17 +78,17 @@ def get_v(r_div_R, z_div_L, Pi_div_DLP, k, alpha_ast, Bp, Bm, gp, gm):
     """ Using expression v=v^out in Eqs. (45) and (49)
     As described in CT.get_v, sign is positive because we are using coordinate function r here
     """
-    sign = +1.
-    rw_div_R = 1.
-    vw = CT.get_v(r_div_R, z_div_L, Pi_div_DLP, k, alpha_ast, Bp, Bm, gp, gm)
-    vR = 2.*r_div_R - r_div_R**3.0
-    return sign * vR * vw
+    # sign = +1.
+    # rw_div_R = 1.
+    # vw = CT.get_v(r_div_R, z_div_L, Pi_div_DLP, k, alpha_ast, Bp, Bm, gp, gm)
+    # vR = 2.*r_div_R - r_div_R**3.0
+    return CT.get_v(r_div_R, z_div_L, Pi_div_DLP, k, alpha_ast, Bp, Bm, gp, gm)
 
 
 # for y-directional information related with outer solution
 
 def gen_y_div_R_arr(cond_GT):
-    """ This is generating discretized dimensionless y-coordinate
+    """ Generating discretized dimensionless y-coordinate with adaptive step size
     The selected way for the adaptive step size is only for the temporary
     There are revised version, which will be applied for the near future.
     """
@@ -144,7 +144,7 @@ def gen_phi_wrt_yt(z_div_L, phiw, fcn_D, vw_div_vw0, y_div_R_arr, phi_arr, cond_
     phi_b = cond_GT['phi_bulk']
     ed = cond_GT['epsilon_d']
     
-    phi = phiw
+    phi_arr[0] = phiw
     int_INV_D_pre = 0.
     for i in range(1, size(y_div_R_arr)):
         y2 = y_div_R_arr[i]; y1 = y_div_R_arr[i-1]
@@ -329,12 +329,12 @@ def gen_new_phiw_div_phib_arr(phiw_div_phib_arr_new, cond_GT, fcn_D, fcn_eta, z_
     Ieta_arr_zi = zeros(Ny)
     ID_arr_zi = zeros(Ny)
 
-    ind_z0 = 0
+    ind_z0 = 0 #z-index at inlet
     
-    z0_div_L = 0.
+    z0_div_L = 0. #z-coord at inlet
     
-    r0_div_R = 0.
-    rw_div_R = 1.
+    r0_div_R = 0. #r-coord at the centerline of pipe
+    rw_div_R = 1. #r-coord at the membrane wall
     
     vw_div_vw0_z0 = get_v_conv(rw_div_R, z0_div_L, Pi_div_DLP_arr[ind_z0], cond_GT, gp_arr[ind_z0], gm_arr[ind_z0])
     gen_phi_wrt_yt(z0_div_L, phiw_div_phib_arr[ind_z0]*phi_b, fcn_D, vw_div_vw0_z0, yt_arr, phi_arr_z0, cond_GT)
