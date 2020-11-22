@@ -6,6 +6,7 @@
 #############################################################################
 
 
+
 import sys
 # from sol_solvent import *
 # from sol_CT import *
@@ -101,12 +102,19 @@ else:
     #         phiw_update = get_new_phiw_div_phib_arr
     phiw_update = GT.gen_new_phiw_div_phib_arr
 
-    Pi_arr = zeros(size(phiw_arr))                                     # calculating osmotic pressure using initial conditions
+    Pi_arr = zeros(size(phiw_arr))                                     # Set zero osmotic pressure
     Pi_div_DLP_arr = Pi_arr/cond_PS['DLP']
     
     Gk_tmp = CT.get_Gk(cond_PS['k'], dz_div_L, Pi_div_DLP_arr)
     cond_CT = CT.get_cond(cond_PS, phi_bulk, a_particle, a_H, Va, kT, dz, Gk_tmp)     # allocating conditions for the constant transport properties
-    cond_GT = GT.get_cond(cond_CT, dr, weight) # allocating conditions for the general transport properties
+    cond_GT = GT.get_cond(cond_CT, Nr, weight) # allocating conditions for the general transport properties
+
+    # phi_interpolate_dense_arr = linspace(0., phi_freeze, 1000)
+    # fcn_Pi_INT = interp1d(phi_interpolate_dense_arr, fcn_Pi_given(phi_interpolate_dense_arr, cond_GT), 'cubic')
+    # fcn_eta_INT = interp1d(phi_interpolate_dense_arr, fcn_eta_given(phi_interpolate_dense_arr, cond_GT), 'cubic')
+    # fcn_Dc_INT = interp1d(phi_interpolate_dense_arr, fcn_Dc_given(phi_interpolate_dense_arr, cond_GT), 'cubic')
+    
+
     
     phi_b= cond_GT['phi_bulk']                                         # set the feed/bulk concentration
     phiw_div_phib_arr = phiw_arr/phi_b                                 # reduced wall concentration
@@ -119,23 +127,6 @@ else:
     gp_arr = zeros(Nz)                                                 # constructing array for g+(z) function
     gm_arr = zeros(Nz)                                                 # constructing array for g-(z) function
 
-    # if IDENT_verbose:
-    #     print ('  IDENT_verbose is turned on, which will record the analysis of result for every FPI steps')
-    #     print ('                The current IDENT_verbose option is not parallelized, which takes longer time for computation')
-    #     fn_ver = fn_out + '.%05d'%(0)
-    #     gen_analysis(z_arr, y_div_R_arr, phiw_set_1*phi_b, cond_GT, fcn_Pi_given, fcn_Dc_given, fcn_eta_given, fn_ver)
-    re = zeros([Nz, 11])
-
-    # print ('\nSystem and operating conditions:' )
-    # print ('  - Summary of dimensional quantities:')
-    # print ('\tPin, Pper, ref_Pout in Pa :', int(cond_GT['Pin']), int(cond_GT['Pper']), int(cond_GT['Pout']))
-    # print ('\tDLP, DTP_PS, DTP_HP in Pa : ', int(cond_GT['DLP']), int(cond_GT['DTP_PS']), int(cond_GT['DTP_HP']))
-    # print ('\tLp=%4.3e, eta0=%4.3e, R=%4.3e, L=%4.3e'%(cond_GT['Lp'], cond_GT['eta0'], cond_GT['R'], cond_GT['L']))
-    # print ('\ta=%4.3e, a_H=%4.3e (gamma=a_H/a=%4.3e), D0=%4.3e'%(cond_GT['a'], cond_GT['a_H'], cond_GT['gamma'], cond_GT['D0']))
-
-    # print ('  - Corresponding dimensionless quantities:')
-    # print ('\tk=%.4f, alpha_ast=%.4f, beta_ast=%.4f'%(cond_GT['k'], cond_GT['alpha_ast'], cond_GT['beta_ast']))
-    # print ('\tepsilon=%4.3e, epsilon_d=%4.3e (Pe_R=%.1f)'%(cond_GT['R']/cond_GT['L'], cond_GT['epsilon_d'], 1./cond_GT['epsilon_d']))
     print_summary(cond_GT)
     print ('\nCalculating...\n')
     sign_plus = +1.
@@ -143,31 +134,16 @@ else:
     # Pi_div_DLP_arr_new = deepcopy(Pi_div_DLP_arr)
     for n in range(N_iter):                                                           # main iterator with number n
         phiw_set_1 = deepcopy(phiw_set_2)                                             # reduced wall concentration inherited from the previous iteration
-        # Pi_div_DLP_arr = deepcopy(Pi_div_DLP_arr_new)
-        # av_Pi = length_average_f(z_arr, Pi_arr, cond_GT['L'], cond_GT['dz'])
-        # print('<Pi>/DTP_PS=%4.3e'%(av_Pi/cond_GT['DTP_PS']))
         
         CT.gen_gpm_arr(sign_plus,  z_div_L_arr, Pi_div_DLP_arr, k, gp_arr)
         CT.gen_gpm_arr(sign_minus, z_div_L_arr, Pi_div_DLP_arr, k, gm_arr)
         cond_GT['Gk'] = CT.get_Gk_boost(k, dz_div_L, gp_arr[-1], gm_arr[-1])
         cond_GT['Bp'] = CT.get_Bpm_conv(sign_plus, cond_GT)
         cond_GT['Bm'] = CT.get_Bpm_conv(sign_minus, cond_GT)
-        # cond_GT['Bp'] = CT.get_Bpm(sign_plus, cond_GT['k'], cond_GT['alpha_ast'], cond_GT['Gk'])
-        # cond_GT['Bm'] = CT.get_Bpm(sign_minus, cond_GT['k'], cond_GT['alpha_ast'], cond_GT['Gk'])
-        
-        # for i in range(Nz):                                                           # generating g+(z) and g-(z) functions
-        #     gp_arr[i] = CT.get_gpm(+1.0, z_div_L_arr[i], dz_div_L, Pi_div_DLP_arr, k)
-        #     gm_arr[i] = CT.get_gpm(-1.0, z_div_L_arr[i], dz_div_L, Pi_div_DLP_arr, k)
-        #     # gp_arr[i] = CT.get_gpm(z_arr[i], dz, +1.0, Pi_arr, k, cond_PS['L'])
-        #     # gm_arr[i] = CT.get_gpm(z_arr[i], dz, -1.0, Pi_arr, k, cond_PS['L'])
-        # cond_CT = CT.get_cond(cond_PS, phi_bulk, a_particle, a_H, Va, kT, dz, Gk_tmp)                # update conditions for CT
-        # cond_GT = GT.get_cond(cond_CT, dr, weight) # update conditions for GT
-        # cond_GT['k'] = cond_GT['k'] * eta_div_eta0_SPHS(phi_b, cond_GT)               # update the dimensionless value k
 
-        # phiw_set_2= phiw_update(cond_GT, Pi_arr, fcn_Dc_given, fcn_eta_given,\
-        #                         z_arr, phiw_set_1, weight, gp_arr, gm_arr, y_div_R_arr)    # main FPI iterator
         phiw_update(phiw_set_2, cond_GT, fcn_Dc_given, fcn_eta_given, z_div_L_arr, phiw_set_1, Pi_div_DLP_arr, cond_GT['weight'], gp_arr, gm_arr, y_div_R_arr)
 
+        # Pi_arr = fcn_Pi_given(phiw_set_2*phi_b, cond_GT)                              # calculating osmotic pressure for the given phiw
         Pi_arr = fcn_Pi_given(phiw_set_2*phi_b, cond_GT)                              # calculating osmotic pressure for the given phiw
         Pi_div_DLP_arr = Pi_arr/cond_GT['DLP']
 
@@ -197,19 +173,10 @@ else:
         print('iter=%d, norm(phiw_set_1-phiw_set_2)=%4.3e (reference values: L=%4.3f, DTP_HP=%4.3e, Phi_ast=not_defined_yet)'%(report_step[0], err, cond_GT['L'], cond_GT['DTP_HP']))
         print('\tz_max=%4.3f, phiw(z_max)=%.4f, phiw(L)=%.4f\n\t<Pi>(pre)/DTP_HP=%4.3e, DTP(pre)/DTP_HP=%4.3e'%(report_step[1], report_step[2], report_step[3], report_step[4], report_step[5]))
         print()
-        
-        # print(phiw_set_2)
-        
-        # if IDENT_verbose:                                                             # the case when each steps will be printed out
-        #     fn_ver = fn_out + '.%05d'%(n + 1)
-        #     gen_analysis(z_arr, y_div_R_arr, phiw_set_2*phi_b, cond_GT, fcn_Pi_given, fcn_Dc_given, fcn_eta_given, fn_ver)
-            
-        # ind_max = argmax(phiw_set_2)                                                  # get index number for the maximum values of phiw(z)
-        # print ('n=%d, phiw/b(0)=%4.3f, phiw/b(L)=%4.3f, max:(phiw(%4.3f)/b)=%4.3f'%(n, phiw_set_2[0], phiw_set_2[-1], z_arr[ind_max], phiw_set_2[ind_max]))
-
-        # print ('norm(p1-p2) : %4.3e, weight : %4.3f\n'%(err, weight))
 
         if(n == N_iter-1):
+            re = zeros([Nz, 11])
+            
             re[:, 0] = z_arr
             re[:, 1] = phiw_set_2*phi_b
 
@@ -252,4 +219,4 @@ else:
                     re[i, 9] = Phi_z * 2. * pi * cond_GT['u_HP']*cond_GT['R']**2.0
                 
     savetxt(fn_out, re)
-    # gen_analysis(z_arr, y_div_R_arr, phiw_set_2*phi_b, cond_GT, fcn_Pi_given, fcn_Dc_given, fcn_eta_given, fn_out)
+

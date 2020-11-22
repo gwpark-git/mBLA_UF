@@ -14,16 +14,8 @@ from numpy import *
 N_iter = 100          # Maximum iteration for FPI
 weight = 0.1          # Relaxation factor for FPI
 Nz = 100              # Z-discritization number
-Nr = 100              # Bulk R-discritization number (note that the boundary-layer R-disc. has a different number)
+Nr = 200              # Bulk R-discritization number (note that the boundary-layer R-disc. has a different number)
 IDENT_parallel = False # True/False : parallel computation
-
-# # Methodology
-# IDENT_modification = True   # True for newly proposed version and False for the original version 
-
-# # Additional option
-# IDENT_verbose = False  # If True, it record all the result steps
-
-# System parameters
 
 R_channel = 0.5/1000. # m          : Radius of channel
 L_channel = 0.5       # m          : Length of channel
@@ -36,6 +28,7 @@ DLP = 130             # Pa         : Longitudinal pressure difference
 
 # Dispersion properties
 phi_bulk = 1e-3   # Inlet volume fraction of particle
+phi_freeze = 0.494
 a_particle = 1e-8 # m : Hard-core radius of particle
 gamma = 1.0       # Solvent-permeability to hard spheres (a_H/a_particle)
 

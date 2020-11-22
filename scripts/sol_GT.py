@@ -17,7 +17,7 @@ import sol_CT as CT
 from scipy.interpolate import interp1d
 from copy import deepcopy
 
-def get_cond(cond_CT, dr, weight):
+def get_cond(cond_CT, Nr, weight):
     if (cond_CT['COND'] != 'CT'):
         print('Error: inherit non-CT type of dictionary in get_cond is not supported.')
         
@@ -25,7 +25,8 @@ def get_cond(cond_CT, dr, weight):
     re              = cond_CT.copy()
     re['COND']      = COND_TYPE # update the given type to GT (general transport properties)
     # re['phi_bulk']  = phi_bulk
-    re['dr']        = dr        # reference dr. note that the actual dr will be adjusted in accordance with boundary layer analysis.
+    # re['dr']        = dr        # reference dr. note that the actual dr will be adjusted in accordance with boundary layer analysis.
+    re['Nr']        = Nr
     re['weight']    = weight    # weight for under-relaxed FPI operator
     return re
 
@@ -87,29 +88,78 @@ def get_v(r_div_R, z_div_L, Pi_div_DLP, k, alpha_ast, Bp, Bm, gp, gm):
 
 # for y-directional information related with outer solution
 
+
 def gen_y_div_R_arr(cond_GT):
     """ Generating discretized dimensionless y-coordinate with adaptive step size
     The selected way for the adaptive step size is only for the temporary
     There are revised version, which will be applied for the near future.
     """
-    dy = cond_GT['dr']
-    dyt = dy/cond_GT['R']
-    dyp = cond_GT['epsilon_d'] * dyt
+
+    # generating temporal yt_arr using constant step size on the log-scale of yt
+    # Ny = int(cond_GT['R']/cond_GT['dr'])
+    Ny = int(cond_GT['Nr'])
+    yt_arr = zeros(Ny)
+
+    Ny_tmp = Ny*10
+    yt_tmp_arr = linspace(-6, 0, Ny_tmp)
+    yt_tmp_arr = 10.**yt_tmp_arr
+    yt_tmp_arr[0] = 0.
+
+    # generating arc_length of (phi^CT - phi_b)/(phi_w - phi_b) using vw_div_vw0=1 and CT assumption
+    # this is only approximately interprete the arc length, which, however,
+    # CT could be the maximum stiffness compared with the general concentration-dependent transport properties.
+    # In addition, vw_div_vw0=1 is not too bad to interprete the about the measure of arc-length
+    larc_yt_tmp_arr = zeros(Ny_tmp)
+    ed = cond_GT['epsilon_d']
+    for i in range(1, Ny_tmp):
+        y2_tmp = yt_tmp_arr[i]
+        y1_tmp = yt_tmp_arr[i-1]
+        dy_tmp = y2_tmp - y1_tmp
+        
+        l_arc_2 = sqrt(1. + (exp(-y2_tmp/ed)/ed)**2.0)
+        l_arc_1 = sqrt(1. + (exp(-y1_tmp/ed)/ed)**2.0)
+
+        larc_yt_tmp_arr[i] = larc_yt_tmp_arr[i-1] + 0.5 * dy_tmp * (l_arc_1 + l_arc_2)
+
+    total_arc_length = larc_yt_tmp_arr[-1]
+    dl = total_arc_length/float(Ny)
+    int_larc_vs_yt_arr = interp1d(larc_yt_tmp_arr, yt_tmp_arr, kind='cubic')
+
+
+    l_i = 0.
+    larc_arr = zeros(Ny)
+    for i in range(1, Ny):
+        l_tmp = dl * i + l_i
+        yt_arr[i] = int_larc_vs_yt_arr(l_tmp)
+        larc_arr[i] = l_tmp        
+
+    # re_test = zeros([Ny, 2])
+    # re_test[:,0] = yt_arr
+    # re_test[:,1] = larc_arr
+    # savetxt('tset_yt_arr.dat', re_test)
+        
     
-    tmp_yt = 0.
-    yt_arr = [tmp_yt]
-    while(tmp_yt < 1. - dyt):
-        if tmp_yt < cond_GT['epsilon_d']:
-            tmp_dy = dyp
-        elif tmp_yt < 2. * cond_GT['epsilon_d']:
-            tmp_dy = 2.*dyp
-        elif tmp_yt < 10. * cond_GT['epsilon_d']:
-            tmp_dy = 10.*dyp
-        else:
-            tmp_dy = dyt
-        tmp_yt += tmp_dy
-        yt_arr.append(tmp_yt)
-    yt_arr = asarray(yt_arr)
+    # dy = cond_GT['dr']
+    # dyt = dy/cond_GT['R']
+    # dyp = cond_GT['epsilon_d'] * dyt
+    
+    # tmp_yt = 0.
+    # yt_arr = [tmp_yt]
+    # while(tmp_yt < 1. - dyt):
+    #     if tmp_yt < cond_GT['epsilon_d']:
+    #         tmp_dy = dyp
+    #     elif tmp_yt < 2. * cond_GT['epsilon_d']:
+    #         tmp_dy = 2.*dyp
+    #     elif tmp_yt < 10. * cond_GT['epsilon_d']:
+    #         tmp_dy = 10.*dyp
+    #     else:
+    #         tmp_dy = dyt
+    #     tmp_yt += tmp_dy
+    #     yt_arr.append(tmp_yt)
+    # yt_arr = asarray(yt_arr)
+    print (yt_arr)
+    print ("size = ", size(yt_arr))
+    
     return yt_arr
 
 
@@ -146,10 +196,12 @@ def gen_phi_wrt_yt(z_div_L, phiw, fcn_D, vw_div_vw0, y_div_R_arr, phi_arr, cond_
     
     phi_arr[0] = phiw
     int_INV_D_pre = 0.
-    for i in range(1, size(y_div_R_arr)):
+    Ny = size(y_div_R_arr)
+    for i in range(1, Ny):
         y2 = y_div_R_arr[i]; y1 = y_div_R_arr[i-1]
         dy = y2 - y1        
         yh = y1 + dy/2. # for RK4 method        
+        
 
         phi_1 = phi_arr[i-1]
         k1 = dy * cal_f_RK(y1, 0., phi_1, 0., int_INV_D_pre, vw_div_vw0, fcn_D, cond_GT)
@@ -160,6 +212,10 @@ def gen_phi_wrt_yt(z_div_L, phiw, fcn_D, vw_div_vw0, y_div_R_arr, phi_arr, cond_
         phi_arr[i] = phi_2
 
         int_INV_D_pre += (dy/2.) * (1./fcn_D(phi_2, cond_GT) + 1./fcn_D(phi_1, cond_GT))
+
+        # if (i>=Ny-1):
+        #     print (i, y2, dy, yh, phi_arr[0], phi_2, int_INV_D_pre)
+        #     print (k1, k2, k3, k4)
 
     return 0
 
@@ -191,27 +247,6 @@ def gen_INT_inv_f_wrt_yt(yt_arr, phi_arr, INT_inv_f_arr, f_given, cond_GT):
         re += 0.5 * dy * (tmp_f1 + tmp_f2)
         INT_inv_f_arr[i] = re
     return 0
-
-
-# def cal_F2_0(vw_div_vw0_z0, ed, yt_arr, Ieta_arr_z0, ID_arr_z0, uZ_z0):
-#     """ [Overhead version] Calculate F2_0 for cal_int_Fz
-#     This is decoupled from cal_int_Fz for z>0 because the value F2_0 will be used for calculating F2_Z for all z>0.
-#     Therefore, this additional help function will reduce the overhead of calculation, even though the real function is just a part of cal_int_Fz.
-
-#     """
-#     re_F2_0 = 0.
-#     tmp_F2_0_1 = (1. - yt_arr[0])*(2. - yt_arr[0])*Ieta_arr_z0[0]*(1. - exp(-(vw_div_vw0_z0/ed)*ID_arr_z0[0])*((vw_div_vw0_z0/ed)*ID_arr_z0[0]))
-#     tmp_F2_0_2 = tmp_F2_0_1
-
-#     for i in range(1, size(yt_arr)):
-#         dy = yt_arr[i] - yt_arr[i-1]
-
-#         tmp_F2_0_1 = tmp_F2_0_2
-#         tmp_F2_0_2 = (1. - yt_arr[i])*(2. - yt_arr[i])*Ieta_arr_z0[i]*(1. - exp(-(vw_div_vw0_z0/ed)*ID_arr_z0[i])*((vw_div_vw0_z0/ed)*ID_arr_z0[i]))
-#         re_F2_0 += 0.5 * dy * (tmp_F2_0_1 + tmp_F2_0_2)
-
-#     re_F2_0 *= uZ_z0
-#     return re_F2_0
 
 def cal_F2_Z(vw_div_vw0, ed, yt_arr, Ieta_arr, ID_arr, uZ_zi):
     """ [Overhead version] Calculate F2_Z defined in cal_int_Fz
@@ -337,30 +372,34 @@ def gen_new_phiw_div_phib_arr(phiw_div_phib_arr_new, cond_GT, fcn_D, fcn_eta, z_
     rw_div_R = 1. #r-coord at the membrane wall
     
     vw_div_vw0_z0 = get_v_conv(rw_div_R, z0_div_L, Pi_div_DLP_arr[ind_z0], cond_GT, gp_arr[ind_z0], gm_arr[ind_z0])
+    # print (0)
     gen_phi_wrt_yt(z0_div_L, phiw_div_phib_arr[ind_z0]*phi_b, fcn_D, vw_div_vw0_z0, yt_arr, phi_arr_z0, cond_GT)
+    # print (1)
     gen_INT_inv_f_wrt_yt(yt_arr, phi_arr_z0, Ieta_arr_z0, fcn_eta, cond_GT)
     gen_INT_inv_f_wrt_yt(yt_arr, phi_arr_z0, ID_arr_z0, fcn_D, cond_GT)
 
-    # uZ_z0 = get_u_conv(r0_div_R, z0_div_L, cond_GT, gp_arr[ind_z0], gm_arr[ind_z0], Ieta_arr_z0[-1])
     uZ_z0 = get_uZ_out(z0_div_L, cond_GT['k'], cond_GT['Bp'], cond_GT['Bm'], gp_arr[ind_z0], gm_arr[ind_z0])
     F2_0 = cal_F2_Z(vw_div_vw0_z0, ed, yt_arr, Ieta_arr_z0, ID_arr_z0, uZ_z0)
 
     Nz = size(z_div_L_arr)
     for i in range(1, Nz):
+        # print (i, 1)
         vw_div_vw0_zi = get_v_conv(rw_div_R, z_div_L_arr[i], Pi_div_DLP_arr[i], cond_GT, gp_arr[i], gm_arr[i])
+        # print (i, 2)        
         gen_phi_wrt_yt(z_div_L_arr[i], phiw_div_phib_arr[i]*phi_b, fcn_D, vw_div_vw0_zi, yt_arr, phi_arr_zi, cond_GT)
+        # print (i, 3)
         gen_INT_inv_f_wrt_yt(yt_arr, phi_arr_zi, Ieta_arr_zi, fcn_eta, cond_GT)
+        # print (i, 4)
         gen_INT_inv_f_wrt_yt(yt_arr, phi_arr_zi, ID_arr_zi, fcn_D, cond_GT)
-        # uZ_zi = get_u_conv(r0_div_R, z_div_L_arr[i], cond_GT, gp_arr[i], gm_arr[i], Ieta_arr_zi[-1])
+        # print (i, 5)
         uZ_zi = get_uZ_out(z_div_L_arr[i], cond_GT['k'], cond_GT['Bp'], cond_GT['Bm'], gp_arr[i], gm_arr[i])
         
         phiw_div_phib_arr_new[i] = cal_int_Fz(F2_0, vw_div_vw0_zi, ed, yt_arr, Ieta_arr_zi, ID_arr_zi, uZ_zi)
 
-    # print(phiw_div_phib_arr[-1]*phi_b, phiw_div_phib_arr_new[-1]*phi_b)
     FPI_operator(cond_GT['weight'], phiw_div_phib_arr, phiw_div_phib_arr_new, N_skip=1) # phiw(0) must be phib.
-    # print(phiw_div_phib_arr_new[-1]*phi_b)
-    
-    
+
     return 0
 
 
+# def process_at_z():
+    
