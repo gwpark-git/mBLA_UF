@@ -24,9 +24,8 @@ def get_cond(cond_CT, Nr, weight):
     COND_TYPE       = 'GT'
     re              = cond_CT.copy()
     re['COND']      = COND_TYPE # update the given type to GT (general transport properties)
-    # re['phi_bulk']  = phi_bulk
-    # re['dr']        = dr        # reference dr. note that the actual dr will be adjusted in accordance with boundary layer analysis.
     re['Nr']        = Nr
+    re['dr']        = cond_GT['R']/float(re['Nr']) # reference dr. note that the actual dr will be adjusted in accordance with boundary layer analysis.
     re['weight']    = weight    # weight for under-relaxed FPI operator
     return re
 
@@ -101,7 +100,7 @@ def gen_y_div_R_arr(cond_GT):
     yt_arr = zeros(Ny)
 
     Ny_tmp = Ny*10
-    yt_tmp_arr = linspace(-6, 0, Ny_tmp)
+    yt_tmp_arr = linspace(-10, 0, Ny_tmp)
     yt_tmp_arr = 10.**yt_tmp_arr
     yt_tmp_arr[0] = 0.
 
@@ -132,12 +131,11 @@ def gen_y_div_R_arr(cond_GT):
         l_tmp = dl * i + l_i
         yt_arr[i] = int_larc_vs_yt_arr(l_tmp)
         larc_arr[i] = l_tmp        
+    yt_arr[-1] = 1.
 
-    # re_test = zeros([Ny, 2])
-    # re_test[:,0] = yt_arr
-    # re_test[:,1] = larc_arr
-    # savetxt('tset_yt_arr.dat', re_test)
-        
+    
+    # # The below commented lines are for the former adaptive step size used in the original manuscript
+    # # The current arc-length based adpative step size scheme is more stable then the previous one.
     
     # dy = cond_GT['dr']
     # dyt = dy/cond_GT['R']
@@ -157,8 +155,6 @@ def gen_y_div_R_arr(cond_GT):
     #     tmp_yt += tmp_dy
     #     yt_arr.append(tmp_yt)
     # yt_arr = asarray(yt_arr)
-    print (yt_arr)
-    print ("size = ", size(yt_arr))
     
     return yt_arr
 
