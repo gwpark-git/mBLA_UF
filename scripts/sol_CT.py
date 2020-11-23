@@ -10,10 +10,8 @@
 #   Note:                                                                   #
 #   it is possible to give particle-contributed osmotic pressure            #
 #   if Pi=0 regardless the concentration, this is CT0 case (see table II).  #
-#   for non-zero Pi, one must given by the value Pi/DLP for calculating vw  #
+#   for non-zero Pi, Pi/DLP must be provided for calculating vw             #
 #   in accordance with Darcy-Starling law                                   #
-#   without particle-contributed osmotic pressure Pi=0                      #
-#   This is the case of CT0 denoted in the paper (see Table II).            #
 #############################################################################
 
 
@@ -47,6 +45,9 @@ def get_cond(cond_PS, phi_bulk, a_colloid, a_hydrodynamic, Va, kT, dz, Gk):
     re['Va']   = Va                                                                    # particle volume in the unit of m^3
     re['kT']   = kT                                                                    # thermal energy in the unit of J
     re['D0']   = kT/(6.*pi*re['eta0']*a_hydrodynamic) # Stokes-Einstein-Sutherland diffusion coefficient in Eq. (14)
+
+    re['Phi_ast'] = pi*re['R']**2.0 * re['phi_bulk'] * re['u_HP']
+    
     re['Pe_R'] = re['R']*re['vw0']/re['D0'] # radial Peclet number from Eq. (37)
     re['epsilon_d'] = 1./re['Pe_R'] # selected perturbation constant using Eq. (41)
     re['dz']   = dz                                                                    # step size for z in the unit of m

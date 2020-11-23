@@ -17,6 +17,12 @@ import sol_CT as CT
 from scipy.interpolate import interp1d
 from copy import deepcopy
 
+# from pathos.multiprocessing import Pool
+# from functools import partial
+import multiprocessing as mp
+# def fcn_test(a, b_arr):
+#     return a + size(b_arr)
+
 def get_cond(cond_CT, Nr, weight):
     if (cond_CT['COND'] != 'CT'):
         print('Error: inherit non-CT type of dictionary in get_cond is not supported.')
@@ -25,8 +31,9 @@ def get_cond(cond_CT, Nr, weight):
     re              = cond_CT.copy()
     re['COND']      = COND_TYPE # update the given type to GT (general transport properties)
     re['Nr']        = Nr
-    re['dr']        = cond_GT['R']/float(re['Nr']) # reference dr. note that the actual dr will be adjusted in accordance with boundary layer analysis.
+    re['dr']        = re['R']/float(re['Nr']) # reference dr. note that the actual dr will be adjusted in accordance with boundary layer analysis.
     re['weight']    = weight    # weight for under-relaxed FPI operator
+    re['weight_ref']= weight    # this will be the reference value for the weight
     return re
 
 
@@ -344,7 +351,24 @@ def FPI_operator(weight, val_pre, val_new, N_skip=0):
         val_new[i] = (1. - weight)*val_pre[i] + weight*val_new[i]
     return 0
 
-def gen_new_phiw_div_phib_arr(phiw_div_phib_arr_new, cond_GT, fcn_D, fcn_eta, z_div_L_arr, phiw_div_phib_arr, Pi_div_DLP_arr, weight, gp_arr, gm_arr, yt_arr):
+def process_at_zi(z_div_L, phiw, Pi_div_DLP, cond_GT, gp, gm, yt_arr, phi_arr, Ieta_arr, fcn_eta, ID_arr, fcn_D, F2_0):
+    
+    rw_div_R = 1.
+    vw_div_vw0_zi = get_v_conv(rw_div_R, z_div_L, Pi_div_DLP, cond_GT, gp, gm)
+    # print (i, 2)        
+    gen_phi_wrt_yt(z_div_L, phiw, fcn_D, vw_div_vw0_zi, yt_arr, phi_arr, cond_GT)
+    # print (i, 3)
+    gen_INT_inv_f_wrt_yt(yt_arr, phi_arr, Ieta_arr, fcn_eta, cond_GT)
+    # print (i, 4)
+    gen_INT_inv_f_wrt_yt(yt_arr, phi_arr, ID_arr, fcn_D, cond_GT)
+    # print (i, 5)
+    uZ_zi = get_uZ_out(z_div_L, cond_GT['k'], cond_GT['Bp'], cond_GT['Bm'], gp, gm)
+
+    phiw_div_phib_new = cal_int_Fz(F2_0, vw_div_vw0_zi, cond_GT['epsilon_d'], yt_arr, Ieta_arr, ID_arr, uZ_zi)
+    return phiw_div_phib_new
+    # return phiw_div_phib_new_zi
+
+def gen_new_phiw_div_phib_arr(N_PROCESSES, phiw_div_phib_arr_new, cond_GT, fcn_D, fcn_eta, z_div_L_arr, phiw_div_phib_arr, Pi_div_DLP_arr, weight, gp_arr, gm_arr, yt_arr, phi_yt_arr, ID_yt_arr, Ieta_yt_arr):
     """ Calculation phi_w/phi_b at the given z using Eq. (D3)
     The detailed terms in Eq. (D3) is explained in the function cal_int_Fz which calculate the integration.
     """
@@ -352,13 +376,17 @@ def gen_new_phiw_div_phib_arr(phiw_div_phib_arr_new, cond_GT, fcn_D, fcn_eta, z_
     ed = cond_GT['epsilon_d']
     
     Ny = size(yt_arr)
-    phi_arr_z0 = zeros(Ny)
-    Ieta_arr_z0 = zeros(Ny)
-    ID_arr_z0 = zeros(Ny)
+    # phi_arr_z0 = zeros(Ny)
+    # Ieta_arr_z0 = zeros(Ny)
+    # ID_arr_z0 = zeros(Ny)
+    # # Python allocate the name for phi_yt_arr[0], this is the same as reference value for C++ " y= &x"
+    phi_arr_z0 = phi_yt_arr[0]
+    Ieta_arr_z0= Ieta_yt_arr[0]
+    ID_arr_z0 = ID_yt_arr[0]
 
-    phi_arr_zi = zeros(Ny)
-    Ieta_arr_zi = zeros(Ny)
-    ID_arr_zi = zeros(Ny)
+    # phi_arr_zi = zeros(Ny)
+    # Ieta_arr_zi = zeros(Ny)
+    # ID_arr_zi = zeros(Ny)
 
     ind_z0 = 0 #z-index at inlet
     
@@ -378,19 +406,27 @@ def gen_new_phiw_div_phib_arr(phiw_div_phib_arr_new, cond_GT, fcn_D, fcn_eta, z_
     F2_0 = cal_F2_Z(vw_div_vw0_z0, ed, yt_arr, Ieta_arr_z0, ID_arr_z0, uZ_z0)
 
     Nz = size(z_div_L_arr)
-    for i in range(1, Nz):
-        # print (i, 1)
-        vw_div_vw0_zi = get_v_conv(rw_div_R, z_div_L_arr[i], Pi_div_DLP_arr[i], cond_GT, gp_arr[i], gm_arr[i])
-        # print (i, 2)        
-        gen_phi_wrt_yt(z_div_L_arr[i], phiw_div_phib_arr[i]*phi_b, fcn_D, vw_div_vw0_zi, yt_arr, phi_arr_zi, cond_GT)
-        # print (i, 3)
-        gen_INT_inv_f_wrt_yt(yt_arr, phi_arr_zi, Ieta_arr_zi, fcn_eta, cond_GT)
-        # print (i, 4)
-        gen_INT_inv_f_wrt_yt(yt_arr, phi_arr_zi, ID_arr_zi, fcn_D, cond_GT)
-        # print (i, 5)
-        uZ_zi = get_uZ_out(z_div_L_arr[i], cond_GT['k'], cond_GT['Bp'], cond_GT['Bm'], gp_arr[i], gm_arr[i])
+    pool = mp.Pool(N_PROCESSES)
+    args_list = [(z_div_L_arr[i], phiw_div_phib_arr[i]*phi_b, Pi_div_DLP_arr[i], cond_GT, gp_arr[i], gm_arr[i], yt_arr, phi_yt_arr[i], Ieta_yt_arr[i], fcn_eta, ID_yt_arr[i], fcn_D, F2_0)\
+                 for i in range(1, Nz)]
+    phiw_div_phib_arr_new[1:] = pool.starmap(process_at_zi, args_list)
+    pool.close()
+    pool.join()
+    # for i in range(1, Nz):
+    #     # the below are reference arrays. No overhead for copy
+    #     phiw_div_phib_arr_new[i] = process_at_zi(z_div_L_arr[i], phiw_div_phib_arr[i]*phi_b, Pi_div_DLP_arr[i], cond_GT, gp_arr[i], gm_arr[i], yt_arr, phi_yt_arr[i], Ieta_yt_arr[i], fcn_eta, ID_yt_arr[i], fcn_D, F2_0)
+    #     # # print (i, 1)
+    #     # vw_div_vw0_zi = get_v_conv(rw_div_R, z_div_L_arr[i], Pi_div_DLP_arr[i], cond_GT, gp_arr[i], gm_arr[i])
+    #     # # print (i, 2)        
+    #     # gen_phi_wrt_yt(z_div_L_arr[i], phiw_div_phib_arr[i]*phi_b, fcn_D, vw_div_vw0_zi, yt_arr, phi_arr_zi, cond_GT)
+    #     # # print (i, 3)
+    #     # gen_INT_inv_f_wrt_yt(yt_arr, phi_arr_zi, Ieta_arr_zi, fcn_eta, cond_GT)
+    #     # # print (i, 4)
+    #     # gen_INT_inv_f_wrt_yt(yt_arr, phi_arr_zi, ID_arr_zi, fcn_D, cond_GT)
+    #     # # print (i, 5)
+    #     # uZ_zi = get_uZ_out(z_div_L_arr[i], cond_GT['k'], cond_GT['Bp'], cond_GT['Bm'], gp_arr[i], gm_arr[i])
         
-        phiw_div_phib_arr_new[i] = cal_int_Fz(F2_0, vw_div_vw0_zi, ed, yt_arr, Ieta_arr_zi, ID_arr_zi, uZ_zi)
+    #     # phiw_div_phib_arr_new[i] = cal_int_Fz(F2_0, vw_div_vw0_zi, ed, yt_arr, Ieta_arr_zi, ID_arr_zi, uZ_zi)
 
     FPI_operator(cond_GT['weight'], phiw_div_phib_arr, phiw_div_phib_arr_new, N_skip=1) # phiw(0) must be phib.
 

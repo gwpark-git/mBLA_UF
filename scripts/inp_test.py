@@ -11,11 +11,12 @@ from numpy import *
 
 # Parameters for numerical computation
 
-N_iter = 100          # Maximum iteration for FPI
+N_iter = 10          # Maximum iteration for FPI
 weight = 0.1          # Relaxation factor for FPI
+TOL_chi_A = 1e-3      # Convergence criterion before meet n == N_iter
 Nz = 100              # Z-discritization number
 Nr = 200              # Bulk R-discritization number (note that the boundary-layer R-disc. has a different number)
-IDENT_parallel = False # True/False : parallel computation
+N_PROCESSES = 1       # Number of processes for multiprocessing
 
 R_channel = 0.5/1000. # m          : Radius of channel
 L_channel = 0.5       # m          : Length of channel
