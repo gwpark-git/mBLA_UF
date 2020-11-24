@@ -53,7 +53,6 @@ def lambda_V_SPHS(gamma):
 
 def Del_eta_noHI_div_eta0_SPHS(phi):
     # (Note: phi_RCP ~ 0.64 is already applied)    
-    # return (12/5)*phi**2*(1 - 7.085*phi + 20.182*phi**2)/(1 - phi/0.64)
     return (12/5.)*phi**2*(1 - 7.085*phi + 20.182*phi**2)/(1 - phi/0.64)
     
 

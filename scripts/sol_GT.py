@@ -17,11 +17,7 @@ import sol_CT as CT
 from scipy.interpolate import interp1d
 from copy import deepcopy
 
-# from pathos.multiprocessing import Pool
-# from functools import partial
 import multiprocessing as mp
-# def fcn_test(a, b_arr):
-#     return a + size(b_arr)
 
 def get_cond(cond_CT, Nr, weight):
     if (cond_CT['COND'] != 'CT'):
@@ -71,9 +67,6 @@ def get_u(r_div_R, z_div_L, k, Bp, Bm, gp, gm, int_Y):
     u_Z^out is given in following Eq. (45)
     """
     
-    # y_div_R = 1. - r_div_R
-    # int_Y = INT_Ieta_yt_with_fixed_z(y_div_R) # for variable y, we should use the interpolation function
-    
     uR = (1. + r_div_R)*int_Y
     uZ_out = -k*(exp(k*z_div_L)*(Bp + gm) \
                  - exp(-k*z_div_L)*(Bm + gp))
@@ -85,10 +78,6 @@ def get_v(r_div_R, z_div_L, Pi_div_DLP, k, alpha_ast, Bp, Bm, gp, gm):
     """ Using expression v=v^out in Eqs. (45) and (49)
     As described in CT.get_v, sign is positive because we are using coordinate function r here
     """
-    # sign = +1.
-    # rw_div_R = 1.
-    # vw = CT.get_v(r_div_R, z_div_L, Pi_div_DLP, k, alpha_ast, Bp, Bm, gp, gm)
-    # vR = 2.*r_div_R - r_div_R**3.0
     return CT.get_v(r_div_R, z_div_L, Pi_div_DLP, k, alpha_ast, Bp, Bm, gp, gm)
 
 
@@ -101,8 +90,6 @@ def gen_y_div_R_arr(cond_GT):
     There are revised version, which will be applied for the near future.
     """
 
-    # generating temporal yt_arr using constant step size on the log-scale of yt
-    # Ny = int(cond_GT['R']/cond_GT['dr'])
     Ny = int(cond_GT['Nr'])
     yt_arr = zeros(Ny)
 
@@ -215,10 +202,6 @@ def gen_phi_wrt_yt(z_div_L, phiw, fcn_D, vw_div_vw0, y_div_R_arr, phi_arr, cond_
         phi_arr[i] = phi_2
 
         int_INV_D_pre += (dy/2.) * (1./fcn_D(phi_2, cond_GT) + 1./fcn_D(phi_1, cond_GT))
-
-        # if (i>=Ny-1):
-        #     print (i, y2, dy, yh, phi_arr[0], phi_2, int_INV_D_pre)
-        #     print (k1, k2, k3, k4)
 
     return 0
 
@@ -355,18 +338,13 @@ def process_at_zi(z_div_L, phiw, Pi_div_DLP, cond_GT, gp, gm, yt_arr, phi_arr, I
     
     rw_div_R = 1.
     vw_div_vw0_zi = get_v_conv(rw_div_R, z_div_L, Pi_div_DLP, cond_GT, gp, gm)
-    # print (i, 2)        
     gen_phi_wrt_yt(z_div_L, phiw, fcn_D, vw_div_vw0_zi, yt_arr, phi_arr, cond_GT)
-    # print (i, 3)
     gen_INT_inv_f_wrt_yt(yt_arr, phi_arr, Ieta_arr, fcn_eta, cond_GT)
-    # print (i, 4)
     gen_INT_inv_f_wrt_yt(yt_arr, phi_arr, ID_arr, fcn_D, cond_GT)
-    # print (i, 5)
     uZ_zi = get_uZ_out(z_div_L, cond_GT['k'], cond_GT['Bp'], cond_GT['Bm'], gp, gm)
 
     phiw_div_phib_new = cal_int_Fz(F2_0, vw_div_vw0_zi, cond_GT['epsilon_d'], yt_arr, Ieta_arr, ID_arr, uZ_zi)
     return phiw_div_phib_new
-    # return phiw_div_phib_new_zi
 
 def gen_new_phiw_div_phib_arr(N_PROCESSES, phiw_div_phib_arr_new, cond_GT, fcn_D, fcn_eta, z_div_L_arr, phiw_div_phib_arr, Pi_div_DLP_arr, weight, gp_arr, gm_arr, yt_arr, phi_yt_arr, ID_yt_arr, Ieta_yt_arr):
     """ Calculation phi_w/phi_b at the given z using Eq. (D3)
@@ -376,17 +354,10 @@ def gen_new_phiw_div_phib_arr(N_PROCESSES, phiw_div_phib_arr_new, cond_GT, fcn_D
     ed = cond_GT['epsilon_d']
     
     Ny = size(yt_arr)
-    # phi_arr_z0 = zeros(Ny)
-    # Ieta_arr_z0 = zeros(Ny)
-    # ID_arr_z0 = zeros(Ny)
     # # Python allocate the name for phi_yt_arr[0], this is the same as reference value for C++ " y= &x"
     phi_arr_z0 = phi_yt_arr[0]
     Ieta_arr_z0= Ieta_yt_arr[0]
     ID_arr_z0 = ID_yt_arr[0]
-
-    # phi_arr_zi = zeros(Ny)
-    # Ieta_arr_zi = zeros(Ny)
-    # ID_arr_zi = zeros(Ny)
 
     ind_z0 = 0 #z-index at inlet
     
@@ -396,9 +367,7 @@ def gen_new_phiw_div_phib_arr(N_PROCESSES, phiw_div_phib_arr_new, cond_GT, fcn_D
     rw_div_R = 1. #r-coord at the membrane wall
     
     vw_div_vw0_z0 = get_v_conv(rw_div_R, z0_div_L, Pi_div_DLP_arr[ind_z0], cond_GT, gp_arr[ind_z0], gm_arr[ind_z0])
-    # print (0)
     gen_phi_wrt_yt(z0_div_L, phiw_div_phib_arr[ind_z0]*phi_b, fcn_D, vw_div_vw0_z0, yt_arr, phi_arr_z0, cond_GT)
-    # print (1)
     gen_INT_inv_f_wrt_yt(yt_arr, phi_arr_z0, Ieta_arr_z0, fcn_eta, cond_GT)
     gen_INT_inv_f_wrt_yt(yt_arr, phi_arr_z0, ID_arr_z0, fcn_D, cond_GT)
 
@@ -412,26 +381,10 @@ def gen_new_phiw_div_phib_arr(N_PROCESSES, phiw_div_phib_arr_new, cond_GT, fcn_D
     phiw_div_phib_arr_new[1:] = pool.starmap(process_at_zi, args_list)
     pool.close()
     pool.join()
-    # for i in range(1, Nz):
-    #     # the below are reference arrays. No overhead for copy
-    #     phiw_div_phib_arr_new[i] = process_at_zi(z_div_L_arr[i], phiw_div_phib_arr[i]*phi_b, Pi_div_DLP_arr[i], cond_GT, gp_arr[i], gm_arr[i], yt_arr, phi_yt_arr[i], Ieta_yt_arr[i], fcn_eta, ID_yt_arr[i], fcn_D, F2_0)
-    #     # # print (i, 1)
-    #     # vw_div_vw0_zi = get_v_conv(rw_div_R, z_div_L_arr[i], Pi_div_DLP_arr[i], cond_GT, gp_arr[i], gm_arr[i])
-    #     # # print (i, 2)        
-    #     # gen_phi_wrt_yt(z_div_L_arr[i], phiw_div_phib_arr[i]*phi_b, fcn_D, vw_div_vw0_zi, yt_arr, phi_arr_zi, cond_GT)
-    #     # # print (i, 3)
-    #     # gen_INT_inv_f_wrt_yt(yt_arr, phi_arr_zi, Ieta_arr_zi, fcn_eta, cond_GT)
-    #     # # print (i, 4)
-    #     # gen_INT_inv_f_wrt_yt(yt_arr, phi_arr_zi, ID_arr_zi, fcn_D, cond_GT)
-    #     # # print (i, 5)
-    #     # uZ_zi = get_uZ_out(z_div_L_arr[i], cond_GT['k'], cond_GT['Bp'], cond_GT['Bm'], gp_arr[i], gm_arr[i])
-        
-    #     # phiw_div_phib_arr_new[i] = cal_int_Fz(F2_0, vw_div_vw0_zi, ed, yt_arr, Ieta_arr_zi, ID_arr_zi, uZ_zi)
 
     FPI_operator(cond_GT['weight'], phiw_div_phib_arr, phiw_div_phib_arr_new, N_skip=1) # phiw(0) must be phib.
 
     return 0
 
 
-# def process_at_z():
     

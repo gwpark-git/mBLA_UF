@@ -96,10 +96,6 @@ def get_P(z_div_L, k, Ap, Am, Pper_div_DLP):
 def get_P_conv(z_div_L, cond):
     return get_P(z_div_L, cond['k'], cond['Ap'], cond['Am'], cond['Pper_div_DLP'])
 
-# def get_P(r, z, cond):
-#     k=cond['k']; Pper = cond['Pper']; Ap = cond['Ap']; Am = cond['Am']; L = cond['L']
-#     return cond['Pper']/cond['DLP'] + cond['Ap']*exp(k*z/L) + cond['Am']*exp(-k*z/L)
-
 def get_u(r_div_R, z_div_L, k, Ap, Am):
     """ Using Eq. (31) (the second expression)
     """

@@ -8,19 +8,12 @@
 
 
 import sys
-# from sol_solvent import *
-# from sol_CT import *
-# from sol_GT import *
-# from sol_GT_parallel import *
 import sol_solvent as PS
 import sol_CT as CT
 import sol_GT as GT
 
 import osmotic_pressure_CS as CS
 import transport_properties_SPHS as PHS
-# from osmotic_pressure_CS import *
-# from transport_properties_SPHS import *
-# from analysis import *
 from analysis import *
 
 from numpy import *

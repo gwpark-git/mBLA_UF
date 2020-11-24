@@ -58,8 +58,6 @@ def get_cond(cond_PS, phi_bulk, a_colloid, a_hydrodynamic, Va, kT, dz, Gk):
     
     re['Bp']   = get_Bpm_conv(sign_plus, re)
     re['Bm']   = get_Bpm_conv(sign_minus, re)
-    # re['Bp']   = get_Bpm(+1.0, re['k'], re['alpha_ast'], re['Gk']) # calculated Bp in the dimensionless unit
-    # re['Bm']   = get_Bpm(-1.0, re['k'], re['alpha_ast'], re['Gk']) # calculate Bm in the dimensionless unit
 
     return re
 
