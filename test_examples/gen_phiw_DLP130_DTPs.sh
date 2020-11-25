@@ -27,7 +27,7 @@ python plot_analysis.py data/${fn_out} data/analysis/${fn_out}.pdf
 
 # automatically testing with different DTP
 
-for DTP in $(seq 500 250 5000)
+for DTP in $(seq 500 500 5000)
 do
     fn_inp='inp_'${fn_base}${DTP}'.py'
     fn_out='phiw_'${fn_base}${DTP}'.dat'

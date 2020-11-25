@@ -1,9 +1,9 @@
-###############################################################
-#   Obtaining analytic solution with boundary layer analysis  #
-#   Paper authors: Gun Woo Park and Gerhard Naegele           #
-#   Developer: Gun Woo Park                                   #
-#   email: g.park@fz-juelich.de                               #
-###############################################################
+#############################################################################
+#   Modeling cross-flow ultrafiltration of permeable particles dispersions  #
+#   Paper authors: Park, Gun Woo and Naegele, Gerhard                       #
+#   Developer: Park, Gun Woo                                                #
+#   email: g.park@fz-juelich.de                                             #
+#############################################################################
 
 
 import scipy.constants as const
@@ -11,19 +11,12 @@ from numpy import *
 
 # Parameters for numerical computation
 
-N_iter = 100          # Maximum iteration for FPI
+N_iter = 10          # Maximum iteration for FPI
 weight = 0.1          # Relaxation factor for FPI
+TOL_chi_A = 1e-3      # Convergence criterion before meet n == N_iter
 Nz = 100              # Z-discritization number
-Nr = 100              # Bulk R-discritization number (note that the boundary-layer R-disc. has a different number)
-IDENT_parallel = True # True/False : parallel computation
-
-# Methodology
-IDENT_modification = True   # True for newly proposed version and False for the original version 
-
-# Additional option
-IDENT_verbose = False  # If True, it record all the result steps
-
-# System parameters
+Nr = 200              # Bulk R-discritization number (note that the boundary-layer R-disc. has a different number)
+N_PROCESSES = 1       # Number of processes for multiprocessing
 
 R_channel = 0.5/1000. # m          : Radius of channel
 L_channel = 0.5       # m          : Length of channel
@@ -36,8 +29,9 @@ DLP = 130             # Pa         : Longitudinal pressure difference
 
 # Dispersion properties
 phi_bulk = 1e-3   # Inlet volume fraction of particle
-gamma = 1.0       # Solvent-permeability to hard spheres
-a_particle = 1e-8 # m : Radius of particle
+phi_freeze = 0.494
+a_particle = 1e-8 # m : Hard-core radius of particle
+gamma = 1.0       # Solvent-permeability to hard spheres (a_H/a_particle)
 
 # Transport properties
 from osmotic_pressure_CS import *
