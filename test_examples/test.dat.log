@@ -1,0 +1,12 @@
+
+##############################################################
+# Semi-analytic solution of mBLA UF using CP layer model     #
+# git-repository: https://github.com/gwpark-git/mBLA_UF.git  #
+# Developer: Gunwoo Park (IBI-4, Forschungszentrum Juelich)  #
+# Reference: Park and Naegele, JCP (accepted, 2020)          #
+##############################################################
+
+Executed time (date): 09:19 (25/11/2020)
+with Arguments: inp_test.py, test.dat
+     Log will be stored in test.dat.log
+

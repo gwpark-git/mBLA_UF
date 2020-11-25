@@ -17,6 +17,7 @@ import transport_properties_SPHS as PHS
 from analysis import *
 
 from numpy import *
+import scipy.constants as const
 from scipy.stats import linregress
 from scipy.interpolate import interp1d
 from scipy.linalg import norm
@@ -130,7 +131,7 @@ if __name__ == '__main__' :
             cond_GT['Bp'] = CT.get_Bpm_conv(sign_plus, cond_GT)
             cond_GT['Bm'] = CT.get_Bpm_conv(sign_minus, cond_GT)
 
-            gen_new_phiw_div_phib_arr(N_PROCESSES, phiw_set_2, cond_GT, fcn_Dc_given, fcn_eta_given, z_div_L_arr, phiw_set_1, Pi_div_DLP_arr, cond_GT['weight'], gp_arr, gm_arr, y_div_R_arr, phi_yt_arr, ID_yt_arr, Ieta_yt_arr)
+            GT.gen_new_phiw_div_phib_arr(N_PROCESSES, phiw_set_2, cond_GT, fcn_Dc_given, fcn_eta_given, z_div_L_arr, phiw_set_1, Pi_div_DLP_arr, cond_GT['weight'], gp_arr, gm_arr, y_div_R_arr, phi_yt_arr, ID_yt_arr, Ieta_yt_arr)
 
             Pi_arr = fcn_Pi_given(phiw_set_2*phi_b, cond_GT)                              # calculating osmotic pressure for the given phiw
             Pi_div_DLP_arr = Pi_arr/cond_GT['DLP']
@@ -139,6 +140,7 @@ if __name__ == '__main__' :
             if n == N_iter-1 or chi_A < TOL_chi_A:
                 print('\n Iteration is ended with n=%d and chi_A=%4.3e (STOP criterion: n=%d OR chi_A=%4.3e)\n'%(n+1, chi_A, N_iter, TOL_chi_A))
                 gen_analysis(z_arr, y_div_R_arr, phiw_set_2*phi_b, cond_GT, fcn_Pi_given, fcn_Dc_given, fcn_eta_given, fn_out)
+                break
         f_log.close()
 
 

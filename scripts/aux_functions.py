@@ -1,6 +1,6 @@
 from numpy import *
 
-def fcn_given_conv(x_arr, y_arr, cond_GT):
+# def fcn_given_conv(x_arr, y_arr, cond_GT):
 
 def length_average_f(x_arr, f_arr, Lx, dx=0):
     Nx = size(f_arr)
