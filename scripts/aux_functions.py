@@ -1,3 +1,14 @@
+#############################################################################
+#   Auxililary functions for mBLA_UF code                                   #
+#                                                                           #
+#   Used in the paper:                                                      #
+#   Modeling cross-flow ultrafiltration of permeable particles dispersions  #
+#   Paper authors: Park, Gun Woo and Naegele, Gerhard                       #
+#   doi: 10.1063/5.0020986                                                  #
+#   Code Developer: Park, Gun Woo    (g.park@fz-juelich.de)                 #
+#   MIT Open License (see LICENSE file in the main directory)               #
+#############################################################################
+
 from numpy import *
 
 # def fcn_given_conv(x_arr, y_arr, cond_GT):

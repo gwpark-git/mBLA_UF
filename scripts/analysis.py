@@ -1,15 +1,14 @@
 #############################################################################
-#   Analysis codes for cal_phiw_from_input.py                               #
+#   Analysis codes for mBLA_UF code                                         #
 #                                                                           #
+#   Used in the paper:                                                      #
 #   Modeling cross-flow ultrafiltration of permeable particles dispersions  #
 #   Paper authors: Park, Gun Woo and Naegele, Gerhard                       #
-#   Developer: Park, Gun Woo                                                #
-#   email: g.park@fz-juelich.de                                             #
+#   doi: 10.1063/5.0020986                                                  #
+#   Code Developer: Park, Gun Woo    (g.park@fz-juelich.de)                 #
+#   MIT Open License (see LICENSE file in the main directory)               #
 #############################################################################
 
-# from sol_CT import *
-# from sol_GT import *
-# from sol_GT_parallel import *
 
 from aux_functions import *
 
@@ -18,8 +17,6 @@ import sol_CT as CT
 import sol_GT as GT
 
 
-# from osmotic_pressure_CS import *
-# from transport_properties_SPHS import *
 import osmotic_pressure_CS as CS
 import transport_properties_SPHS as PHS
 

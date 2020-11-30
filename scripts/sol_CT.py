@@ -2,16 +2,19 @@
 #   Concentration and flow profile of suspension flow in CF UF              #
 #   Using constant diffusivity D=D_0 and viscosity eta = eta_s              #
 #                                                                           #
-#   Modeling cross-flow ultrafiltration of permeable particles dispersions  #
-#   Paper authors: Park, Gun Woo and Naegele, Gerhard                       #
-#   Developer: Park, Gun Woo                                                #
-#   email: g.park@fz-juelich.de                                             #
-#                                                                           #
 #   Note:                                                                   #
 #   it is possible to give particle-contributed osmotic pressure            #
 #   if Pi=0 regardless the concentration, this is CT0 case (see table II).  #
 #   for non-zero Pi, Pi/DLP must be provided for calculating vw             #
 #   in accordance with Darcy-Starling law                                   #
+#                                                                           #
+#                                                                           #
+#   Used in the paper:                                                      #
+#   Modeling cross-flow ultrafiltration of permeable particles dispersions  #
+#   Paper authors: Park, Gun Woo and Naegele, Gerhard                       #
+#   doi: 10.1063/5.0020986                                                  #
+#   Code Developer: Park, Gun Woo    (g.park@fz-juelich.de)                 #
+#   MIT Open License (see LICENSE file in the main directory)               #
 #############################################################################
 
 

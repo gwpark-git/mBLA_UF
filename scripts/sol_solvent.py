@@ -3,10 +3,12 @@
 #   This is the solution of pure solvent flow described in Sec. IV A        #
 #   of the paper described below.                                           #
 #                                                                           #
+#   Used in the paper:                                                      #
 #   Modeling cross-flow ultrafiltration of permeable particles dispersions  #
 #   Paper authors: Park, Gun Woo and Naegele, Gerhard                       #
-#   Developer: Park, Gun Woo                                                #
-#   email: g.park@fz-juelich.de                                             #
+#   doi: 10.1063/5.0020986                                                  #
+#   Code Developer: Park, Gun Woo    (g.park@fz-juelich.de)                 #
+#   MIT Open License (see LICENSE file in the main directory)               #
 #############################################################################
 
 

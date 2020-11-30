@@ -1,10 +1,13 @@
 #############################################################################
+#   Particle-contributed osmotic pressure using Carnahan-Starling equation  #
+#                                                                           #
+#   Used in the paper:                                                      #
 #   Modeling cross-flow ultrafiltration of permeable particles dispersions  #
 #   Paper authors: Park, Gun Woo and Naegele, Gerhard                       #
-#   Developer: Park, Gun Woo                                                #
-#   email: g.park@fz-juelich.de                                             #
+#   doi: 10.1063/5.0020986                                                  #
+#   Code Developer: Park, Gun Woo    (g.park@fz-juelich.de)                 #
+#   MIT Open License (see LICENSE file in the main directory)               #
 #############################################################################
-
 
 from numpy import *
 
