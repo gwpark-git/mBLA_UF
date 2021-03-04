@@ -1,5 +1,5 @@
 # mBLA_UF
-These scripts provide the calculation of matched asymptotic solution of the concentration-polarization layer in the cross-flow ultrafiltration proposed by Park and Naegele (JCP, 2020, doi=10.1063/5.0020986). The source code is also published on Zenodo in order to provide the proper DOI number (doi=10.5281/zenodo.3895786) used in the manuscript.
+These scripts provide the calculation of matched asymptotic solution of the concentration-polarization layer in the cross-flow ultrafiltration proposed by Park and Naegele (JCP, 2020, https://doi.org/10.1122/1.4997592). The source code is also published on Zenodo in order to provide the proper DOI number (https://doi.org/10.5281/zenodo.3895786) used in the manuscript.
 
 # Version and environment
 ## Version 1.0
