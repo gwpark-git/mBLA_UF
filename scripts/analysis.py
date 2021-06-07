@@ -7,7 +7,16 @@
 #   doi: 10.1063/5.0020986                                                  #
 #   Code Developer: Park, Gun Woo    (g.park@fz-juelich.de)                 #
 #   MIT Open License (see LICENSE file in the main directory)               #
+#                                                                           #
+#   Update (June 2021):                                                     #
+#   The original code only applicable for the hollow fiber                  #
+#   New version support for the channel between two flat sheets:            #
+#   1. FMM: channel flow between flat membrane (top) / membrane (bottom)    #
+#   2. FMS: channel flow between flat membrane (top) / substrate (bottom)   #
+#   For this reason, the hollow fiber expression will be renamed as HF      #
+#                                                                           #
 #############################################################################
+
 
 
 from aux_functions import *
@@ -162,7 +171,7 @@ def gen_analysis(z_arr, y_div_R_arr, phiw_arr, cond_GT, fcn_Pi_given, fcn_Dc_giv
     sign_plus = +1.
     sign_minus = -1.
 
-    re = zeros([Nz, 11])
+    re = zeros([Nz, 15])
 
     re[:, 0] = z_arr
     re[:, 1] = phiw_arr
@@ -184,7 +193,7 @@ def gen_analysis(z_arr, y_div_R_arr, phiw_arr, cond_GT, fcn_Pi_given, fcn_Dc_giv
     
     r0_div_R = 0. #r-coord at the centerline of pipe
     rw_div_R = 1. #r-coord at the membrane wall
-    
+    phi_b = cond_GT['phi_bulk']    
     for i in range(Nz):
         # when iteration is done
         phi_arr_zi = zeros(Ny)
@@ -208,17 +217,36 @@ def gen_analysis(z_arr, y_div_R_arr, phiw_arr, cond_GT, fcn_Pi_given, fcn_Dc_giv
         re[i, 8] = re[i, 4]/cond_GT['u_HP']
 
         Phi_z = 0. # Using Eq. (50)
+        Phi_ex_z = 0. # Using Eq. (60)
+        Phi_b_z = 0. # Using Eq. (60)
         u1 = 0; u2 = 0;
         for j in range(1, Ny):
             dy = y_div_R_arr[j] - y_div_R_arr[j-1]
             u1 = u2
             u2 = GT.get_u_conv(1. - y_div_R_arr[j], zi_div_L, cond_GT, gp_arr[i], gm_arr[i], Ieta_arr_zi[j])
 
-            j1 = phi_arr_zi[j-1]*u1; r1 = 1. - y_div_R_arr[j-1]
-            j2 = phi_arr_zi[j]*u2; r2 = 1. - y_div_R_arr[j]
+            j_ex_1 = (phi_arr_zi[j-1] - phi_b)*u1;
+            j_ex_2 = (phi_arr_zi[j] - phi_b)*u2;
+
+            j_b_1 = phi_b*u1;
+            j_b_2 = phi_b*u2;
+
+            j1 = j_ex_1 + j_b_1
+            j2 = j_ex_2 + j_b_2
+
+
+            r1 = 1. - y_div_R_arr[j-1]
+            r2 = 1. - y_div_R_arr[j]
 
             Phi_z += 0.5 * dy * (j1*r1 + j2*r2)
+            Phi_ex_z += 0.5 * dy * (j_ex_1*r1 + j_ex_2*r2)
+            Phi_b_z += 0.5 * dy * (j_b_1*r1 + j_b_2*r2)
+            
             re[i, 9] = Phi_z * 2. * pi * cond_GT['u_HP']*cond_GT['R']**2.0
+            re[i, 10] = Phi_z
+            re[i, 11] = Phi_ex_z
+            re[i, 12] = Phi_b_z
+            
 
     savetxt(fn_out, re) # write the result into the filename described in fn_out
     return 0

@@ -7,7 +7,16 @@
 #   doi: 10.1063/5.0020986                                                  #
 #   Code Developer: Park, Gun Woo    (g.park@fz-juelich.de)                 #
 #   MIT Open License (see LICENSE file in the main directory)               #
+#                                                                           #
+#   Update (June 2021):                                                     #
+#   The original code only applicable for the hollow fiber                  #
+#   New version support for the channel between two flat sheets:            #
+#   1. FMM: channel flow between flat membrane (top) / membrane (bottom)    #
+#   2. FMS: channel flow between flat membrane (top) / substrate (bottom)   #
+#   For this reason, the hollow fiber expression will be renamed as HF      #
+#                                                                           #
 #############################################################################
+
 
 
 
@@ -46,6 +55,9 @@ if __name__ == '__main__' :
         print ('    col 7: v_w(z)/v^\ast     in the dimensionless unit')
         print ('    col 8: u(r=0, z)/u^\ast  in the dimensionless unit')
         print ('    col 9: Phi(z)            in the unit of m^3/sec')
+        print ('TEMP: col 10: Phi(z)/Q^\ast')
+        print ('TEMP: col 10: Phi_ex(z)/Q^\ast')
+        print ('TEMP: col 10: Phi_b(z)/Q^\ast')        
     else:
         fn_inp = str(sys.argv[1]) # get filename for input script
         fn_out = str(sys.argv[2]) # get filename for output data

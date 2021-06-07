@@ -7,7 +7,16 @@
 #   doi: 10.1063/5.0020986                                                  #
 #   Code Developer: Park, Gun Woo    (g.park@fz-juelich.de)                 #
 #   MIT Open License (see LICENSE file in the main directory)               #
+#                                                                           #
+#   Update (June 2021):                                                     #
+#   The original code only applicable for the hollow fiber                  #
+#   New version support for the channel between two flat sheets:            #
+#   1. FMM: channel flow between flat membrane (top) / membrane (bottom)    #
+#   2. FMS: channel flow between flat membrane (top) / substrate (bottom)   #
+#   For this reason, the hollow fiber expression will be renamed as HF      #
+#                                                                           #
 #############################################################################
+
 
 from numpy import *
 
