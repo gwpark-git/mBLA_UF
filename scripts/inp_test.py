@@ -21,6 +21,24 @@ from numpy import *
 
 membrane_geometry = 'HF'
 
+R_channel = 0.5/1000. # m          : Radius of channel
+L_channel = 0.5       # m          : Length of channel
+
+# Which values will describe membrane permeability?
+# (1) 'membrane' means the membrane permeability Lp (see our paper)
+# (2) 'Darcy' means the Darcy's permeability kappa_Darcy (see our paper)
+# Note that the Lp comes from Darcy-Straling permeate flux: vw = Lp (P - Pper - Pi)
+# whereas Darcy's permeability kappa_Darcy will calculate LP by using
+# integration over the thickness of membrane (homogeneous membrane only)
+# The required input for (1) is 'Lp' without additional parameter
+# The required input for (2) is 'kappa_Darcy' and 'h_membrane' which is thickness of membrane
+# In the case (2), it eventually calculate Lp, then there is no difference
+
+define_permeability = 'darcy'
+kappa_Darcy = 1.3583e-16 # m^2 : Darcy's permeability of membrane
+h_membrane = R_channel/2. # the reference thickness is half of channel-radius
+# When darcy's permeability is given, Lp will be calculated in according to the membrane geometry
+# Lp = 6.7e-10          # m/(Pa*sec) : Solvent-permeability of membrane
 # Parameters for numerical computation
 
 N_iter = 100          # Maximum iteration for FPI
@@ -30,9 +48,7 @@ Nz = 100              # Z-discritization number
 Nr = 200              # Bulk R-discritization number (note that the boundary-layer R-disc. has a different number)
 N_PROCESSES = 2       # Number of processes for multiprocessing
 
-R_channel = 0.5/1000. # m          : Radius of channel
-L_channel = 0.5       # m          : Length of channel
-Lp = 6.7e-10          # m/(Pa*sec) : Solvent-permeability of membrane
+
 eta0 = 1e-3           # Pa*sec     : Solvent viscosity
 T = 293.15            # K          : Temperature
 ref_Pout = 101325     # Pa         : Outlet pressure

@@ -53,7 +53,9 @@ def get_cond(pre_cond, Pin, Pout, Pper): # conditions for pure solvent flow
     inherite from dictionary "pre_cond" parameter described below.
     
     Parameters:
-        pre_cond = {'k':k, 'R':R_channel, 'L':L_channel, 'Lp':Lp, 'eta0':eta0, 'membrane_geometry':membrane_geometry, 'lam1':lam1, 'lam2':lam2}
+        pre_cond = {'k', 'R', 'L', 'Lp', 'eta0',               // the default configuration
+                    'membrane_geometry', 'lam1', 'lam2',       // geometrical aspect
+                    'define_permeability', 'h', 'kappa_Darcy'} // additional permeability options
             'k'    : system parameter k in Eq. (26)   in the dimensionless unit
             'R'    : radius of membrane channel       in the unit of m
             'Lp'   : solvent permeability on the clean membrane in Eqs. (12) and (13) 
@@ -63,6 +65,13 @@ def get_cond(pre_cond, Pin, Pout, Pper): # conditions for pure solvent flow
             'membrane_geometry' : geometry of membrane either 'HF', 'FMM', or 'FMS' (see new manuscript)
             'lam1' : dimensionless quantity bridges between P and U (see new manuscript)
             'lam2' : dimensionless quantity bridge between u0 and V (see new manuscript)
+
+            'define_permeability' : which permeability value is provided either by kappa_Darcy or Lp
+            'h'    : thickness of membrane. if Lp is given, 'h' is not important. However, it just set with R/2 as a reference.
+            'kappa_Darcy' : Darcy's permeability. If Lp is provided, this value is just recalculated based on h=R/2. 
+
+
+
         Pin      = Pressure inlet boundary condition  in the unit of Pa
         Pout     = Pressure outlet boundary condition in the unit of Pa
         Pper     = Pressure in permeate which affect to Darcy-Starling law in Eq. (12) 

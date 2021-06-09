@@ -74,7 +74,16 @@ def print_summary(cond_GT, f_log=None):
     print ('\tLp =%4.3e,   eta0=%4.3e,        R=%4.3e,        L=%4.3e'%(cond_GT['Lp'], cond_GT['eta0'], cond_GT['R'], cond_GT['L']))
     print ('\ta  =%4.3e,    a_H=%4.3e,       D0=%4.3e,  Phi_ast=%4.3e'%(cond_GT['a'], cond_GT['a_H'], cond_GT['D0'], cond_GT['Phi_ast']))
 
-    print ('  - Corresponding dimensionless quantities:')
+    print ('\n  - Permeability of system (kappa-Darcy and Lp):')
+    if (cond_GT['define_permeability'].lower()=='darcy'):
+        print('\tDarcy-permeability (kappa-Darcy = %.6e) is used instead of membrane permeability (Lp)'%(cond_GT['kappa_Darcy']))
+        print('\th/R=%.4f, which leads Lp=%4.3e'%(cond_GT['h']/cond_GT['R'], cond_GT['Lp']))
+        # print('\tCalculating Lp requires h, R, and eta0: Lp = %4.3e'%cond_GT['Lp'])
+    else:
+        print('\tMembrane-permeability (Lp = %4.3e) is used directly'%(cond_GT['Lp']))
+        print('\tIt does not require h for all the calculation. AS AN EXAMPLE, if h=R/2, the re-calculated kappa-Darcy value will be %.6e'%(get_kappa_Darcy_from_Lp(cond_GT['membrane_geometry'], cond_GT['Lp'], cond_GT['R']/2., cond_GT['R'], cond_GT['eta0'])))
+
+    print ('\n  - Corresponding dimensionless quantities:')
     print ('\tlam1=%.4f, lam2=%.4f'%(cond_GT['lam1'], cond_GT['lam2']))
     print ('\tk=%.4f, alpha_ast=%.4f, beta_ast=%.4f, gamma=a_H/a=%4.3e'%(cond_GT['k'], cond_GT['alpha_ast'], cond_GT['beta_ast'], cond_GT['gamma']))
     print ('\tepsilon=%4.3e, epsilon_d=%4.3e (Pe_R=%.1f)'%(cond_GT['R']/cond_GT['L'], cond_GT['epsilon_d'], 1./cond_GT['epsilon_d']))

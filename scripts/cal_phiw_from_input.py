@@ -95,8 +95,25 @@ if __name__ == '__main__' :
         a_H = a_particle*gamma                                             # hydrodynamic radius
         D0 = kT/(6.*pi*eta0*a_H)                                           # Stokes-Einstein-Sutherland
         Va = (4./3.)*pi*a_particle**3.0                                    # volume measure is still using particle exclusion-size
+
+        if (define_permeability.lower()=='darcy'):
+            # this will check whether permeability is given by kappa_Darcy or Lp
+            # this also means h_membrane is given
+            Lp = get_Lp_from_kappa_Darcy(membrane_geometry, kappa_Darcy, h_membrane, R_channel, eta0)
+
+        else:
+            # this is normal situation, and Lp was directly given from input file
+            # even though h_membrane is not necessary to be defined in this case,
+            # we will give as a reference value for it: h = R/2
+            # this is due to the easier understand the pre_cond values below
+            # this also allows us some guess of Darcy's permeability of the membrane
+            h_membrane = R_channel/2.
+            kappa_Darcy = get_kappa_Darcy_from_Lp(membrane_geometry, Lp, h_membrane, R_channel, eta0)
+            
         lam1 = get_lam1(membrane_geometry)
         lam2 = get_lam2(membrane_geometry)
+
+        
         k = get_effective_permeability_parameter_K(lam1, lam2, R_channel, L_channel, Lp, eta0)
         # k = lam1*lam2*sqrt(L_channel**2.0 * Lp * eta0 /R_channel**3.0)
         # print('dimensionless quantities (lam1, lam2, k) = ', lam1, lam2, k)
@@ -106,7 +123,7 @@ if __name__ == '__main__' :
         Pin = PS.get_Pin(DLP, ref_Pout)                                       # calculating Pin for the given DLP and Pout
         Pper = PS.get_Pper(DLP, ref_DTP, k, ref_Pout)                         # calculating Pper for the given DLP, DTP_linear, k, and P_out
 
-        pre_cond = {'k':k, 'R':R_channel, 'L':L_channel, 'Lp':Lp, 'eta0':eta0, 'membrane_geometry':membrane_geometry, 'lam1':lam1, 'lam2':lam2}
+        pre_cond = {'k':k, 'R':R_channel, 'L':L_channel, 'Lp':Lp, 'eta0':eta0, 'membrane_geometry':membrane_geometry, 'lam1':lam1, 'lam2':lam2, 'define_permeability':define_permeability, 'h':h_membrane, 'kappa_Darcy':kappa_Darcy}
         cond_PS = PS.get_cond(pre_cond, Pin, ref_Pout, Pper)                  # allocating Blank Test (pure test) conditions
 
         DTP_HP = (1/2.)*(Pin + ref_Pout) - Pper                            # length-averaged TMP with a linearly declined pressure approximation

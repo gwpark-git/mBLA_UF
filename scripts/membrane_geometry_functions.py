@@ -1,5 +1,19 @@
 from numpy import *
 
+def get_Lp_from_kappa_Darcy(membrane_geometry, kappa_Darcy, h_membrane, R_channel, eta0):
+    # the default is when membrane_geometry = 'HF'
+    Lp = kappa_Darcy / (eta0 * R_channel * log(1. + h_membrane/R_channel))
+    if (membrane_geometry=='FMM' or membrane_geometry=='FMS'):
+        Lp = kappa_Darcy / (eta0 * h_membrane)
+    return Lp
+
+def get_kappa_Darcy_from_Lp(membrane_geometry, Lp, h_membrane, R_channel, eta0):
+    # the default is when membrane_geometry = 'HF'
+    kappa_Darcy = Lp * eta0 * R_channel * log(1. + h_membrane/R_channel)
+    if (membrane_geometry=='FMM' or membrane_geometry=='FMS'):
+        kappa_Darcy = Lp * eta0 * h_membrane
+    return kappa_Darcy
+
 def get_effective_permeability_parameter_K(lam1, lam2, R_channel, L_channel, Lp, eta0):
     return sqrt(lam1*lam2)*sqrt(L_channel**2.0 * Lp * eta0 /R_channel**3.0)
 
