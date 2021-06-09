@@ -96,8 +96,9 @@ if __name__ == '__main__' :
         D0 = kT/(6.*pi*eta0*a_H)                                           # Stokes-Einstein-Sutherland
         Va = (4./3.)*pi*a_particle**3.0                                    # volume measure is still using particle exclusion-size
         lam1 = get_lam1(membrane_geometry)
-        lam2 = get_lam2(membrane_geometry)        
-        k = lam1*lam2*sqrt(L_channel**2.0 * Lp * eta0 /R_channel**3.0)
+        lam2 = get_lam2(membrane_geometry)
+        k = get_effective_permeability_parameter_K(lam1, lam2, R_channel, L_channel, Lp, eta0)
+        # k = lam1*lam2*sqrt(L_channel**2.0 * Lp * eta0 /R_channel**3.0)
         # print('dimensionless quantities (lam1, lam2, k) = ', lam1, lam2, k)
         # k = get_K(lam1, lam2, membrane_geometry, R_channel, L_channel, Lp, eta0)
         # k = 4.*sqrt(L_channel**2.0 * Lp * eta0 /R_channel**3.0)            # dimensionless parameter k

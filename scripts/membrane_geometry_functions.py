@@ -1,8 +1,11 @@
 from numpy import *
 
+def get_effective_permeability_parameter_K(lam1, lam2, R_channel, L_channel, Lp, eta0):
+    return sqrt(lam1*lam2)*sqrt(L_channel**2.0 * Lp * eta0 /R_channel**3.0)
+
 def get_lam1(membrane_geometry):
     # the default value will be the case of 'HF'
-    lam1 = 2.
+    lam1 = 4.
     if (membrane_geometry=='FMM'):
         lam1 = 2.
     elif (membrane_geometry=='FMS'):
@@ -11,12 +14,13 @@ def get_lam1(membrane_geometry):
 
 def get_lam2(membrane_geometry):
     # the default value will be the case of 'HF'
-    lam2 = 2.
+    lam2 = 4.
     if (membrane_geometry=='FMM'):
         lam2 = 3/2.
     elif (membrane_geometry=='FMS'):
         lam2 = 3/4.
     return lam2
+
 
 # def get_K(lam1, lam2, R_channel, L_channel, Lp, eta0):
 #     # the default value will be the case of 'HF'
