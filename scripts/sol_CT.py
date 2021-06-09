@@ -28,6 +28,7 @@
 
 
 from numpy import *
+from membrane_geometry_functions import *
 import sol_solvent as PS
 
 def get_cond(cond_PS, phi_bulk, a_colloid, a_hydrodynamic, Va, kT, dz, Gk):
@@ -166,20 +167,20 @@ def get_P(r_div_R, z_div_L, Pper_div_DLP, k, Bp, Bm, gp, gm):
 def get_P_conv(r_div_R, z_div_L, cond_CT, gp, gm):
     return get_P(r_div_R, z_div_L, cond_CT['Pper_div_DLP'], cond_CT['k'], cond_CT['Bp'], cond_CT['Bm'], gp, gm)
 
-def get_u(r_div_R, z_div_L, k, Bp, Bm, gp, gm):
+def get_u(r_div_R, z_div_L, k, Bp, Bm, gp, gm, lam1):
     """ Using u^out expression in Eq. (45)
     because matched asymptotic u in Eq. (49) with constant transport properties
     give the same expression as u^out in Eq. (45)
     """
-    uR_HP = 1. - r_div_R**2.0
+    uR_HP = (1. - r_div_R**2.0)*lam1/2.
     uZ_out = -k*(exp( k*z_div_L)*(Bp + gm) \
                  -exp(-k*z_div_L)*(Bm + gp))
     return uZ_out*uR_HP
 
 def get_u_conv(r_div_R, z_div_L, cond_CT, gp, gm):
-    return get_u(r_div_R, z_div_L, cond_CT['k'], cond_CT['Bp'], cond_CT['Bm'], gp, gm)
+    return get_u(r_div_R, z_div_L, cond_CT['k'], cond_CT['Bp'], cond_CT['Bm'], gp, gm, cond_CT['lam1'])
 
-def get_v(r_div_R, z_div_L, Pi_div_DLP, k, alpha_ast, Bp, Bm, gp, gm):
+def get_v(r_div_R, z_div_L, Pi_div_DLP, k, alpha_ast, Bp, Bm, gp, gm, membrane_geometry):
     """ Using v^out expression in Eq. (45)
     One must careful about coordinate function r_div_R in comparison with y_div_R
     because the direction is reversed, which means the minus sign in Eq. (45) for v^out
@@ -188,14 +189,15 @@ def get_v(r_div_R, z_div_L, Pi_div_DLP, k, alpha_ast, Bp, Bm, gp, gm):
     This aspect reflected in sign = +1 for the explicit.
     """
     sign = +1.
-    vR = 2.*r_div_R - r_div_R**3.0
+    # vR = 2.*r_div_R - r_div_R**3.0
+    vR = fcn_VR(r_div_R, membrane_geometry)
     vw =(exp( k*z_div_L)*(Bp + gm)\
          +exp(-k*z_div_L)*(Bm + gp)\
          -Pi_div_DLP)/alpha_ast
     return sign*vR*vw
 
 def get_v_conv(r_div_R, z_div_L, Pi_div_DLP, cond_CT, gp, gm):
-    return get_v(r_div_R, z_div_L, Pi_div_DLP, cond_CT['k'], cond_CT['alpha_ast'], cond_CT['Bp'], cond_CT['Bm'], gp, gm)
+    return get_v(r_div_R, z_div_L, Pi_div_DLP, cond_CT['k'], cond_CT['alpha_ast'], cond_CT['Bp'], cond_CT['Bm'], gp, gm, cond_CT['membrane_geometry'])
 
 
 def get_phi(r_div_R, z_div_L, vw_div_vw0, epsilon_d, phiw, phi_bulk):

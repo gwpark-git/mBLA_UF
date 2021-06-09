@@ -23,11 +23,12 @@
 
 from numpy import *
 from aux_functions import *
+from membrane_geometry_functions import *
 import sol_CT as CT
 from scipy.interpolate import interp1d
 from copy import deepcopy
 
-import multiprocessing as mp
+
 
 def get_cond(cond_CT, Nr, weight):
     if (cond_CT['COND'] != 'CT'):
@@ -49,10 +50,10 @@ def get_P_conv(r_div_R, z_div_L, cond_GT, gp, gm):
     return get_P(r_div_R, z_div_L, cond_GT['Pper_div_DLP'], cond_GT['k'], cond_GT['Bp'], cond_GT['Bm'], gp, gm)
 
 def get_u_conv(r_div_R, z_div_L, cond_GT, gp, gm, int_Y):
-    return get_u(r_div_R, z_div_L, cond_GT['k'], cond_GT['Bp'], cond_GT['Bm'], gp, gm, int_Y)
+    return get_u(r_div_R, z_div_L, cond_GT['k'], cond_GT['Bp'], cond_GT['Bm'], gp, gm, cond_GT['lam1'], int_Y)
 
 def get_v_conv(r_div_R, z_div_L, Pi_div_DLP, cond_GT, gp, gm):
-    return get_v(r_div_R, z_div_L, Pi_div_DLP, cond_GT['k'], cond_GT['alpha_ast'], cond_GT['Bp'], cond_GT['Bm'], gp, gm)
+    return get_v(r_div_R, z_div_L, Pi_div_DLP, cond_GT['k'], cond_GT['alpha_ast'], cond_GT['Bp'], cond_GT['Bm'], gp, gm, cond_GT['membrane_geometry'])
 
 # flow profiles 
 
@@ -71,24 +72,24 @@ def get_uZ_out(z_div_L, k, Bp, Bm, gp, gm):
                  - exp(-k*z_div_L)*(Bm + gp))
     return uZ_out
 
-def get_u(r_div_R, z_div_L, k, Bp, Bm, gp, gm, int_Y):
+def get_u(r_div_R, z_div_L, k, Bp, Bm, gp, gm, lam1, int_Y):
     """ Using expressions u in Eq. (45) 
     and integrate 1/eta from r to 1 is reversed from 0 to y (sign change is already applied)
     u_Z^out is given in following Eq. (45)
     """
     
-    uR = (1. + r_div_R)*int_Y
+    uR = (lam1/2.)*(1. + r_div_R)*int_Y
     uZ_out = -k*(exp(k*z_div_L)*(Bp + gm) \
                  - exp(-k*z_div_L)*(Bm + gp))
 
     return uZ_out * uR
 
 
-def get_v(r_div_R, z_div_L, Pi_div_DLP, k, alpha_ast, Bp, Bm, gp, gm):
+def get_v(r_div_R, z_div_L, Pi_div_DLP, k, alpha_ast, Bp, Bm, gp, gm, membrane_geometry):
     """ Using expression v=v^out in Eqs. (45) and (49)
     As described in CT.get_v, sign is positive because we are using coordinate function r here
     """
-    return CT.get_v(r_div_R, z_div_L, Pi_div_DLP, k, alpha_ast, Bp, Bm, gp, gm)
+    return CT.get_v(r_div_R, z_div_L, Pi_div_DLP, k, alpha_ast, Bp, Bm, gp, gm, membrane_geometry)
 
 
 # for y-directional information related with outer solution
@@ -244,37 +245,37 @@ def gen_INT_inv_f_wrt_yt(yt_arr, phi_arr, INT_inv_f_arr, f_given, cond_GT):
         INT_inv_f_arr[i] = re
     return 0
 
-def cal_F2_Z(vw_div_vw0, ed, yt_arr, Ieta_arr, ID_arr, uZ_zi):
+def cal_F2_Z(vw_div_vw0, ed, yt_arr, Ieta_arr, ID_arr, uZ_zi, membrane_geometry):
     """ [Overhead version] Calculate F2_Z defined in cal_int_Fz
     This function will calculate T_z[1-s_bar * e^{s_bar}] independently from cal_int_Fz.
     This might be useful for the analysis of the data.
     """
     re_F2_Z = 0.
-    tmp_F2_Z_1 = (1. - yt_arr[0])*(2. - yt_arr[0])*Ieta_arr[0]*(1. - exp(-(vw_div_vw0/ed)*ID_arr[0])*((vw_div_vw0/ed)*ID_arr[0]))
+    tmp_F2_Z_1 = J_int_yt(yt_arr[0], membrane_geometry)*(2. - yt_arr[0])*Ieta_arr[0]*(1. - exp(-(vw_div_vw0/ed)*ID_arr[0])*((vw_div_vw0/ed)*ID_arr[0]))
     tmp_F2_Z_2 = tmp_F2_Z_1
 
     for i in range(1, size(yt_arr)):
         dy = yt_arr[i] - yt_arr[i-1]
 
         tmp_F2_Z_1 = tmp_F2_Z_2
-        tmp_F2_Z_2 = (1. - yt_arr[i])*(2. - yt_arr[i])*Ieta_arr[i]*(1. - exp(-(vw_div_vw0/ed)*ID_arr[i])*((vw_div_vw0/ed)*ID_arr[i]))
+        tmp_F2_Z_2 = J_int_yt(yt_arr[i], membrane_geometry)*(2. - yt_arr[i])*Ieta_arr[i]*(1. - exp(-(vw_div_vw0/ed)*ID_arr[i])*((vw_div_vw0/ed)*ID_arr[i]))
         re_F2_Z += 0.5 * dy * (tmp_F2_Z_1 + tmp_F2_Z_2)
         
     return re_F2_Z * uZ_zi
 
-def cal_F1_Z(vw_div_vw0, ed, yt_arr, Ieta_arr, ID_arr, uZ_zi):
+def cal_F1_Z(vw_div_vw0, ed, yt_arr, Ieta_arr, ID_arr, uZ_zi, membrane_geometry):
     """ [Overhead version] Calculate F1_Z defined in cal_int_Fz
     This function will calculate T_z[e^{s_bar}] independently from cal_int_Fz.
     This might be useful for the analysis of the data.
     """
     re_F1_Z = 0.
-    tmp_F1_Z_1 = (1. - yt_arr[0])*(2. - yt_arr[0])*Ieta_arr[0]*exp(-(vw_div_vw0/ed)*ID_arr[0])
+    tmp_F1_Z_1 = J_int_yt(yt_arr[0], membrane_geometry)*(2. - yt_arr[0])*Ieta_arr[0]*exp(-(vw_div_vw0/ed)*ID_arr[0])
     tmp_F1_Z_2 = tmp_F1_Z_1
 
     for i in range(1, size(yt_arr)):
         dy = yt_arr[i] - yt_arr[i-1]
         tmp_F1_Z_1 = tmp_F1_Z_2
-        tmp_F1_Z_2 = (1. - yt_arr[i])*(2. - yt_arr[i])*Ieta_arr[i]*exp(-(vw_div_vw0/ed)*ID_arr[i])
+        tmp_F1_Z_2 = J_int_yt(yt_arr[i], membrane_geometry)*(2. - yt_arr[i])*Ieta_arr[i]*exp(-(vw_div_vw0/ed)*ID_arr[i])
         re_F1_Z += 0.5 * dy * (tmp_F1_Z_1 + tmp_F1_Z_2)
         
     return re_F1_Z * uZ_zi
@@ -291,7 +292,7 @@ def cal_Phi_div_Phiast_conv(phiw, phi_bulk, F1_Z, F2_Z):
 
 
 
-def cal_int_Fz(given_re_F2_0, vw_div_vw0, ed, yt_arr, Ieta_arr, ID_arr, uZ_zi):
+def cal_int_Fz(given_re_F2_0, vw_div_vw0, ed, yt_arr, Ieta_arr, ID_arr, uZ_zi, membrane_geometry):
     # ref: process_at_z_modi
     """ Calculate Fz[phi_w] using Eq. (D3)
     For readability, a new notation is used here:
@@ -303,22 +304,22 @@ def cal_int_Fz(given_re_F2_0, vw_div_vw0, ed, yt_arr, Ieta_arr, ID_arr, uZ_zi):
     """
     
     re_F1_Z = 0.
-    tmp_F1_Z_1 = (1. - yt_arr[0])*(2. - yt_arr[0])*Ieta_arr[0]*exp(-(vw_div_vw0/ed)*ID_arr[0])
+    tmp_F1_Z_1 = J_int_yt(yt_arr[0], membrane_geometry)*(2. - yt_arr[0])*Ieta_arr[0]*exp(-(vw_div_vw0/ed)*ID_arr[0])
     tmp_F1_Z_2 = tmp_F1_Z_1
     
     re_F2_Z = 0.
-    tmp_F2_Z_1 = (1. - yt_arr[0])*(2. - yt_arr[0])*Ieta_arr[0]*(1. - exp(-(vw_div_vw0/ed)*ID_arr[0])*((vw_div_vw0/ed)*ID_arr[0]))
+    tmp_F2_Z_1 = J_int_yt(yt_arr[0], membrane_geometry)*(2. - yt_arr[0])*Ieta_arr[0]*(1. - exp(-(vw_div_vw0/ed)*ID_arr[0])*((vw_div_vw0/ed)*ID_arr[0]))
     tmp_F2_Z_2 = tmp_F2_Z_1
 
     for i in range(1, size(yt_arr)):
         dy = yt_arr[i] - yt_arr[i-1]
 
         tmp_F1_Z_1 = tmp_F1_Z_2
-        tmp_F1_Z_2 = (1. - yt_arr[i])*(2. - yt_arr[i])*Ieta_arr[i]*exp(-(vw_div_vw0/ed)*ID_arr[i])
+        tmp_F1_Z_2 = J_int_yt(yt_arr[i], membrane_geometry)*(2. - yt_arr[i])*Ieta_arr[i]*exp(-(vw_div_vw0/ed)*ID_arr[i])
         re_F1_Z += 0.5 * dy * (tmp_F1_Z_1 + tmp_F1_Z_2)
         
         tmp_F2_Z_1 = tmp_F2_Z_2
-        tmp_F2_Z_2 = (1. - yt_arr[i])*(2. - yt_arr[i])*Ieta_arr[i]*(1. - exp(-(vw_div_vw0/ed)*ID_arr[i])*((vw_div_vw0/ed)*ID_arr[i]))
+        tmp_F2_Z_2 = J_int_yt(yt_arr[i], membrane_geometry)*(2. - yt_arr[i])*Ieta_arr[i]*(1. - exp(-(vw_div_vw0/ed)*ID_arr[i])*((vw_div_vw0/ed)*ID_arr[i]))
         re_F2_Z += 0.5 * dy * (tmp_F2_Z_1 + tmp_F2_Z_2)
         
     re_F1_Z *= uZ_zi
@@ -353,7 +354,7 @@ def process_at_zi(z_div_L, phiw, Pi_div_DLP, cond_GT, gp, gm, yt_arr, phi_arr, I
     gen_INT_inv_f_wrt_yt(yt_arr, phi_arr, ID_arr, fcn_D, cond_GT)
     uZ_zi = get_uZ_out(z_div_L, cond_GT['k'], cond_GT['Bp'], cond_GT['Bm'], gp, gm)
 
-    phiw_div_phib_new = cal_int_Fz(F2_0, vw_div_vw0_zi, cond_GT['epsilon_d'], yt_arr, Ieta_arr, ID_arr, uZ_zi)
+    phiw_div_phib_new = cal_int_Fz(F2_0, vw_div_vw0_zi, cond_GT['epsilon_d'], yt_arr, Ieta_arr, ID_arr, uZ_zi, cond_GT['membrane_geometry'])
     return phiw_div_phib_new
 
 def gen_new_phiw_div_phib_arr(N_PROCESSES, phiw_div_phib_arr_new, cond_GT, fcn_D, fcn_eta, z_div_L_arr, phiw_div_phib_arr, Pi_div_DLP_arr, weight, gp_arr, gm_arr, yt_arr, phi_yt_arr, ID_yt_arr, Ieta_yt_arr):
@@ -362,6 +363,7 @@ def gen_new_phiw_div_phib_arr(N_PROCESSES, phiw_div_phib_arr_new, cond_GT, fcn_D
     """
     phi_b = cond_GT['phi_bulk']
     ed = cond_GT['epsilon_d']
+    membrane_geometry = cond_GT['membrane_geometry']
     
     Ny = size(yt_arr)
     # # Python allocate the name for phi_yt_arr[0], this is the same as reference value for C++ " y= &x"
@@ -382,15 +384,23 @@ def gen_new_phiw_div_phib_arr(N_PROCESSES, phiw_div_phib_arr_new, cond_GT, fcn_D
     gen_INT_inv_f_wrt_yt(yt_arr, phi_arr_z0, ID_arr_z0, fcn_D, cond_GT)
 
     uZ_z0 = get_uZ_out(z0_div_L, cond_GT['k'], cond_GT['Bp'], cond_GT['Bm'], gp_arr[ind_z0], gm_arr[ind_z0])
-    F2_0 = cal_F2_Z(vw_div_vw0_z0, ed, yt_arr, Ieta_arr_z0, ID_arr_z0, uZ_z0)
+    F2_0 = cal_F2_Z(vw_div_vw0_z0, ed, yt_arr, Ieta_arr_z0, ID_arr_z0, uZ_z0, membrane_geometry)
 
     Nz = size(z_div_L_arr)
-    pool = mp.Pool(N_PROCESSES)
-    args_list = [(z_div_L_arr[i], phiw_div_phib_arr[i]*phi_b, Pi_div_DLP_arr[i], cond_GT, gp_arr[i], gm_arr[i], yt_arr, phi_yt_arr[i], Ieta_yt_arr[i], fcn_eta, ID_yt_arr[i], fcn_D, F2_0)\
-                 for i in range(1, Nz)]
-    phiw_div_phib_arr_new[1:] = pool.starmap(process_at_zi, args_list)
-    pool.close()
-    pool.join()
+    if (N_PROCESSES ==1):
+        # when only single-processor is allocated
+        for i in range(1, Nz):
+            phiw_div_phib_arr_new[1:] = process_at_zi(z_div_L_arr[i], phiw_div_phib_arr[i]*phi_b, Pi_div_DLP_arr[i], cond_GT, gp_arr[i], gm_arr[i], yt_arr, phi_yt_arr[i], Ieta_yt_arr[i], fcn_eta, ID_yt_arr[i], fcn_D, F2_0)
+    else:
+        # this uses multiprocessing packages
+        import multiprocessing as mp
+        
+        pool = mp.Pool(N_PROCESSES)
+        args_list = [(z_div_L_arr[i], phiw_div_phib_arr[i]*phi_b, Pi_div_DLP_arr[i], cond_GT, gp_arr[i], gm_arr[i], yt_arr, phi_yt_arr[i], Ieta_yt_arr[i], fcn_eta, ID_yt_arr[i], fcn_D, F2_0)\
+                     for i in range(1, Nz)]
+        phiw_div_phib_arr_new[1:] = pool.starmap(process_at_zi, args_list)
+        pool.close()
+        pool.join()
 
     FPI_operator(cond_GT['weight'], phiw_div_phib_arr, phiw_div_phib_arr_new, N_skip=1) # phiw(0) must be phib.
 

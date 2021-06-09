@@ -22,6 +22,7 @@
 
 
 from numpy import *
+from membrane_geometry_functions import *
 
 def cal_DTP_HP(Pin, Pout, Pper):
     """ Calculate Delta_T P for Hagen-Poiseuille (HP) flow using Eq. (8)
@@ -50,42 +51,60 @@ def get_cond(pre_cond, Pin, Pout, Pper): # conditions for pure solvent flow
     """ return dictionary "cond" of conditions for pure solvent flow (Sec. IV A)
     dictionary "cond":
     inherite from dictionary "pre_cond" parameter described below.
-    'Ap' : [WIP]
     
     Parameters:
-        pre_cond = {'k':k, 'R':R_channel, 'L':L_channel, 'Lp':Lp, 'eta0':eta0}
+        pre_cond = {'k':k, 'R':R_channel, 'L':L_channel, 'Lp':Lp, 'eta0':eta0, 'membrane_geometry':membrane_geometry, 'lam1':lam1, 'lam2':lam2}
             'k'    : system parameter k in Eq. (26)   in the dimensionless unit
             'R'    : radius of membrane channel       in the unit of m
             'Lp'   : solvent permeability on the clean membrane in Eqs. (12) and (13) 
                                                       in the unit of m/(Pa sec)
             'eta0' : pure solvent viscosity at the operating temperature 
                                                       in the unit of Pa sec
+            'membrane_geometry' : geometry of membrane either 'HF', 'FMM', or 'FMS' (see new manuscript)
+            'lam1' : dimensionless quantity bridges between P and U (see new manuscript)
+            'lam2' : dimensionless quantity bridge between u0 and V (see new manuscript)
         Pin      = Pressure inlet boundary condition  in the unit of Pa
         Pout     = Pressure outlet boundary condition in the unit of Pa
         Pper     = Pressure in permeate which affect to Darcy-Starling law in Eq. (12) 
                                                       in the unit of Pa
-    
+    New update (9 JUN 2021): 
+        pre_cond now contains 'membrane_geometry' which identify 'HF' (default), 'FMM', and 'FMS'
+        in addition, lam1 and lam2 that related with the geometrical aspect is also introduced.
+        Note that k = lam1*lam2* ... values, which means the code in cal_phiw_from_input.py should use k immediately from here.
     """
+    cond = pre_cond.copy()
     COND_TYPE = 'PS' # describe this condition dictionary is type of PS (pure solvent)
     
-    k = pre_cond['k'] 
+    # k = pre_cond['k'] # it is a given parameter
     
     DLP = Pin - Pout                    # Longitudinal pressure difference
     DTP_HP = cal_DTP_HP(Pin, Pout, Pper) # Length-averaged TMP with linear pressure approximation in Eq. (8)
-    DTP_PS = cal_DTP_PS(Pin, Pout, Pper, k) # Length-averaged TMP for pure solvent flow in Eq. (7)
+    DTP_PS = cal_DTP_PS(Pin, Pout, Pper, pre_cond['k']) # Length-averaged TMP for pure solvent flow in Eq. (7)
     vw0 = pre_cond['Lp']*DTP_HP         # v^\ast in Eq. (21)
     alpha_ast = DTP_HP/DLP              # alpha^\ast in Eq. (23)
-    beta_ast = k**2.0 * alpha_ast       # beta^\ast in Eq. (24) and (26)
+    beta_ast = pre_cond['k']**2.0 * alpha_ast       # beta^\ast in Eq. (24) and (26)
     u_HP = pre_cond['R']**2.0 * DLP/(4.*pre_cond['eta0']*pre_cond['L'])
     
-    Ap = get_Apm(+1.0, k, alpha_ast)
-    Am = get_Apm(-1.0, k, alpha_ast)
+    Ap = get_Apm(+1.0, pre_cond['k'], alpha_ast)
+    Am = get_Apm(-1.0, pre_cond['k'], alpha_ast)
 
-    cond = {'k':pre_cond['k'], 'Ap':Ap, 'Am':Am, 'Pin':Pin, 'Pout':Pout, 'Pper':Pper, 'DLP':DLP,\
-           'R':pre_cond['R'], 'L':pre_cond['L'], 'Lp':pre_cond['Lp'], 'eta0':pre_cond['eta0'], \
-            'u_HP':u_HP, 'vw0':vw0, 'alpha_ast':alpha_ast, 'beta_ast':beta_ast,\
-            'Pper_div_DLP':Pper/DLP, 'COND':COND_TYPE,\
-            'DTP_HP':DTP_HP, 'DTP_PS':DTP_PS}
+    cond['Ap']           = Ap
+    cond['Am']           = Am
+    cond['Pin']          = Pin
+    cond['Pout']         = Pout
+    cond['Pper']         = Pper
+    cond['DLP']          = DLP
+    cond['u_HP']         = u_HP
+    cond['vw0']          = vw0
+    cond['alpha_ast']    = alpha_ast
+    cond['beta_ast']     = beta_ast
+    cond['Pper_div_DLP'] = Pper/DLP
+    cond['COND']         = COND_TYPE
+    cond['DTP_HP']       = DTP_HP
+    cond['DTP_PS']       = DTP_PS
+# {            'u_HP':u_HP, 'vw0':vw0, 'alpha_ast':alpha_ast, 'beta_ast':beta_ast,\
+#             'Pper_div_DLP':Pper/DLP, 'COND':COND_TYPE,\
+#             'DTP_HP':DTP_HP, 'DTP_PS':DTP_PS}
     return cond
 
 
@@ -107,26 +126,29 @@ def get_P(z_div_L, k, Ap, Am, Pper_div_DLP):
 def get_P_conv(z_div_L, cond):
     return get_P(z_div_L, cond['k'], cond['Ap'], cond['Am'], cond['Pper_div_DLP'])
 
-def get_u(r_div_R, z_div_L, k, Ap, Am):
+def get_u(r_div_R, z_div_L, k, Ap, Am, lam1):
     """ Using Eq. (31) (the second expression)
     """
-    uR_HP = 1. - r_div_R**2.0
+    uR_HP = (1. - r_div_R**2.0)*lam1/2.
     uZ_PS = -k*(exp( k*z_div_L)*Ap - exp(-k*z_div_L)*Am)
     return uZ_PS*uR_HP
 
 def get_u_conv(r_div_R, z_div_L, cond):
-    return get_u(r_div_R, z_div_L, cond['k'], cond['Ap'], cond['Am'])
+    return get_u(r_div_R, z_div_L, cond['k'], cond['Ap'], cond['Am'], cond['lam1'])
 
 
-def get_v(r_div_R, z_div_L, k, alpha_ast, Ap, Am):
+    
+
+def get_v(r_div_R, z_div_L, k, alpha_ast, Ap, Am, membrane_geometry):
     """ Using Eq. (31) (the third expression)
     """
     sign = +1.
-    vR = 2.*r_div_R - r_div_R**3.0
+    # vR = 2.*r_div_R - r_div_R**3.0
+    vR = fcn_VR(r_div_R, membrane_geometry)
     vw =(exp( k*z_div_L)*Ap + exp(-k*z_div_L)*Am)/alpha_ast
 
     return sign*vR*vw
 
 def get_v_conv(r_div_R, z_div_L, cond):
-    return get_v(r_div_R, z_div_L, cond['k'], cond['alpha_ast'], cond['Ap'], cond['Am'])
+    return get_v(r_div_R, z_div_L, cond['k'], cond['alpha_ast'], cond['Ap'], cond['Am'], cond['membrane_geometry'])
 

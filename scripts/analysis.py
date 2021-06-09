@@ -20,6 +20,7 @@
 
 
 from aux_functions import *
+from membrane_geometry_functions import *
 
 import sol_solvent as PS
 import sol_CT as CT
@@ -66,7 +67,7 @@ def print_preface(fn_inp, fn_out, fn_out_log, f_log):
     
 
 def print_summary(cond_GT, f_log=None):
-    print ('\nSystem and operating conditions:' )
+    print ('\nSystem and operating conditions (', cond_GT['membrane_geometry'], '):')
     print ('  - Summary of dimensional quantities (in SI units):')
     print ('\tPin=%9d,   Pper=%9d, ref_Pout=%9d '%(int(cond_GT['Pin']), int(cond_GT['Pper']), int(cond_GT['Pout'])))
     print ('\tDLP=%9d, DTP_PS=%9d,   DTP_HP=%9d '%(int(cond_GT['DLP']), int(cond_GT['DTP_PS']), int(cond_GT['DTP_HP'])))
@@ -74,6 +75,7 @@ def print_summary(cond_GT, f_log=None):
     print ('\ta  =%4.3e,    a_H=%4.3e,       D0=%4.3e,  Phi_ast=%4.3e'%(cond_GT['a'], cond_GT['a_H'], cond_GT['D0'], cond_GT['Phi_ast']))
 
     print ('  - Corresponding dimensionless quantities:')
+    print ('\tlam1=%.4f, lam2=%.4f'%(cond_GT['lam1'], cond_GT['lam2']))
     print ('\tk=%.4f, alpha_ast=%.4f, beta_ast=%.4f, gamma=a_H/a=%4.3e'%(cond_GT['k'], cond_GT['alpha_ast'], cond_GT['beta_ast'], cond_GT['gamma']))
     print ('\tepsilon=%4.3e, epsilon_d=%4.3e (Pe_R=%.1f)'%(cond_GT['R']/cond_GT['L'], cond_GT['epsilon_d'], 1./cond_GT['epsilon_d']))
 
@@ -235,12 +237,12 @@ def gen_analysis(z_arr, y_div_R_arr, phiw_arr, cond_GT, fcn_Pi_given, fcn_Dc_giv
             j2 = j_ex_2 + j_b_2
 
 
-            r1 = 1. - y_div_R_arr[j-1]
-            r2 = 1. - y_div_R_arr[j]
+            J_r1 = J_int_yt(y_div_R_arr[j-1], cond_GT['membrane_geometry'])
+            J_r2 = J_int_yt(y_div_R_arr[j], cond_GT['membrane_geometry'])
 
-            Phi_z += 0.5 * dy * (j1*r1 + j2*r2)
-            Phi_ex_z += 0.5 * dy * (j_ex_1*r1 + j_ex_2*r2)
-            Phi_b_z += 0.5 * dy * (j_b_1*r1 + j_b_2*r2)
+            Phi_z += 0.5 * dy * (j1*J_r1 + j2*J_r2)
+            Phi_ex_z += 0.5 * dy * (j_ex_1*J_r1 + j_ex_2*J_r2)
+            Phi_b_z += 0.5 * dy * (j_b_1*J_r1 + j_b_2*J_r2)
             
             re[i, 9] = Phi_z * 2. * pi * cond_GT['u_HP']*cond_GT['R']**2.0
             re[i, 10] = Phi_z

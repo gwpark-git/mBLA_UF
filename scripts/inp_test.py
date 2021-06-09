@@ -12,6 +12,15 @@
 import scipy.constants as const
 from numpy import *
 
+# Concerning about the membrane geometry
+# At this moment (8 JUN 20201), there are three possible geometries
+# (1) 'HF' (== 'hollow fiber')
+# (2) 'FMM' (== 'flat membrane/membrane')
+# (3) 'FMS' (== 'flat membrane/substrate')
+# Default is 'HF' as we did in past
+
+membrane_geometry = 'HF'
+
 # Parameters for numerical computation
 
 N_iter = 100          # Maximum iteration for FPI

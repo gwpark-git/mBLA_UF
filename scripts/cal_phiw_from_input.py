@@ -15,6 +15,9 @@
 #   2. FMS: channel flow between flat membrane (top) / substrate (bottom)   #
 #   For this reason, the hollow fiber expression will be renamed as HF      #
 #                                                                           #
+#   Important note:                                                         #
+#   The new updte is based on the coordination y (in the new manuscript)    #
+#   This is exactly the same treatment with r in the code                   #
 #############################################################################
 
 
@@ -27,6 +30,7 @@ import sol_GT as GT
 
 import osmotic_pressure_CS as CS
 import transport_properties_SPHS as PHS
+from membrane_geometry_functions import *
 from analysis import *
 
 from numpy import *
@@ -73,6 +77,9 @@ if __name__ == '__main__' :
         #      :This is due to internal history of the code, so it must be careful to check the units.
         #      :The revised code soon to be published.
 
+        # if (membrane_geometry == 'HF'):
+            
+        
         z_arr = linspace(0, L_channel, Nz)                                 # discretized z
         z_div_L_arr = z_arr/L_channel
 
@@ -88,13 +95,17 @@ if __name__ == '__main__' :
         a_H = a_particle*gamma                                             # hydrodynamic radius
         D0 = kT/(6.*pi*eta0*a_H)                                           # Stokes-Einstein-Sutherland
         Va = (4./3.)*pi*a_particle**3.0                                    # volume measure is still using particle exclusion-size
-
-        k = 4.*sqrt(L_channel**2.0 * Lp * eta0 /R_channel**3.0)            # dimensionless parameter k
-
+        lam1 = get_lam1(membrane_geometry)
+        lam2 = get_lam2(membrane_geometry)        
+        k = lam1*lam2*sqrt(L_channel**2.0 * Lp * eta0 /R_channel**3.0)
+        # print('dimensionless quantities (lam1, lam2, k) = ', lam1, lam2, k)
+        # k = get_K(lam1, lam2, membrane_geometry, R_channel, L_channel, Lp, eta0)
+        # k = 4.*sqrt(L_channel**2.0 * Lp * eta0 /R_channel**3.0)            # dimensionless parameter k
+        
         Pin = PS.get_Pin(DLP, ref_Pout)                                       # calculating Pin for the given DLP and Pout
         Pper = PS.get_Pper(DLP, ref_DTP, k, ref_Pout)                         # calculating Pper for the given DLP, DTP_linear, k, and P_out
 
-        pre_cond = {'k':k, 'R':R_channel, 'L':L_channel, 'Lp':Lp, 'eta0':eta0}
+        pre_cond = {'k':k, 'R':R_channel, 'L':L_channel, 'Lp':Lp, 'eta0':eta0, 'membrane_geometry':membrane_geometry, 'lam1':lam1, 'lam2':lam2}
         cond_PS = PS.get_cond(pre_cond, Pin, ref_Pout, Pper)                  # allocating Blank Test (pure test) conditions
 
         DTP_HP = (1/2.)*(Pin + ref_Pout) - Pper                            # length-averaged TMP with a linearly declined pressure approximation
