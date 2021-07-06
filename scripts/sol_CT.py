@@ -59,7 +59,7 @@ def get_cond(cond_PS, phi_bulk, a_colloid, a_hydrodynamic, Va, kT, dz, Gk):
     re['kT']   = kT                                                                    # thermal energy in the unit of J
     re['D0']   = kT/(6.*pi*re['eta0']*a_hydrodynamic) # Stokes-Einstein-Sutherland diffusion coefficient in Eq. (14)
 
-    re['Phi_ast'] = pi*re['R']**2.0 * re['phi_bulk'] * re['u_HP']
+    re['Phi_ast'] = pi*re['R']**2.0 * re['phi_bulk'] * re['u_ast']
     
     re['Pe_R'] = re['R']*re['vw0']/re['D0'] # radial Peclet number from Eq. (37)
     re['epsilon_d'] = 1./re['Pe_R'] # selected perturbation constant using Eq. (41)
@@ -69,8 +69,8 @@ def get_cond(cond_PS, phi_bulk, a_colloid, a_hydrodynamic, Va, kT, dz, Gk):
     sign_plus = +1.
     sign_minus = -1.
     
-    re['Bp']   = get_Bpm_conv(sign_plus, re)
-    re['Bm']   = get_Bpm_conv(sign_minus, re)
+    re['Bp']   = get_Bpm_BCP_conv(sign_plus, re)
+    re['Bm']   = get_Bpm_BCP_conv(sign_minus, re)
 
     return re
 
@@ -139,13 +139,13 @@ def get_Gk_boost(k, dz_div_L, gp1, gm1):
     return (gp1 * exp(-k) + gm1 * exp(k))/(2.*sinh(k))
 
 
-def get_Bpm(pm, k, alpha_ast, Gk):
+def get_Bpm_BCP(pm, k, alpha_ast, Gk):
     """ [Overhead version] Using expression for Bpm in Eq. (47)
     This function recalculate Apm.
     """
-    return PS.get_Apm(pm, k, alpha_ast) - pm * Gk
+    return PS.get_Apm_BCP(pm, k, alpha_ast) - pm * Gk
 
-def get_Bpm_conv(pm, cond_GT):
+def get_Bpm_BCP_conv(pm, cond_GT):
     """ Using expression for Bpm in Eq. (47)
     cond_GT must stored the proper values of 'Ap' and 'Am', and 'Gk'.
     Otherwise, this convenient function will not properly work.

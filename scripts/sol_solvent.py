@@ -55,7 +55,8 @@ def get_cond(pre_cond, Pin, Pout, Pper): # conditions for pure solvent flow
     Parameters:
         pre_cond = {'k', 'R', 'L', 'Lp', 'eta0',               // the default configuration
                     'membrane_geometry', 'lam1', 'lam2',       // geometrical aspect
-                    'define_permeability', 'h', 'kappa_Darcy'} // additional permeability options
+                    'define_permeability', 'h', 'kappa_Darcy', // additional permeability options
+                    'BC_inlet'}                                // boundary conditions
             'k'    : system parameter k in Eq. (26)   in the dimensionless unit
             'R'    : radius of membrane channel       in the unit of m
             'Lp'   : solvent permeability on the clean membrane in Eqs. (12) and (13) 
@@ -65,11 +66,10 @@ def get_cond(pre_cond, Pin, Pout, Pper): # conditions for pure solvent flow
             'membrane_geometry' : geometry of membrane either 'HF', 'FMM', or 'FMS' (see new manuscript)
             'lam1' : dimensionless quantity bridges between P and U (see new manuscript)
             'lam2' : dimensionless quantity bridge between u0 and V (see new manuscript)
-
             'define_permeability' : which permeability value is provided either by kappa_Darcy or Lp
             'h'    : thickness of membrane. if Lp is given, 'h' is not important. However, it just set with R/2 as a reference.
             'kappa_Darcy' : Darcy's permeability. If Lp is provided, this value is just recalculated based on h=R/2. 
-
+            'BC_inlet' : Specified boundary condition at the inlet either 'pressure' or 'velocity'
 
 
         Pin      = Pressure inlet boundary condition  in the unit of Pa
@@ -92,10 +92,10 @@ def get_cond(pre_cond, Pin, Pout, Pper): # conditions for pure solvent flow
     vw0 = pre_cond['Lp']*DTP_HP         # v^\ast in Eq. (21)
     alpha_ast = DTP_HP/DLP              # alpha^\ast in Eq. (23)
     beta_ast = pre_cond['k']**2.0 * alpha_ast       # beta^\ast in Eq. (24) and (26)
-    u_HP = pre_cond['R']**2.0 * DLP/(4.*pre_cond['eta0']*pre_cond['L'])
+    u_ast = pre_cond['R']**2.0 * DLP/(4.*pre_cond['eta0']*pre_cond['L']) # u_ast = u_HP when pressure inlet BC is used
     
-    Ap = get_Apm(+1.0, pre_cond['k'], alpha_ast)
-    Am = get_Apm(-1.0, pre_cond['k'], alpha_ast)
+    Ap = get_Apm_BCP(+1.0, pre_cond['k'], alpha_ast)
+    Am = get_Apm_BCP(-1.0, pre_cond['k'], alpha_ast)
 
     cond['Ap']           = Ap
     cond['Am']           = Am
@@ -103,7 +103,7 @@ def get_cond(pre_cond, Pin, Pout, Pper): # conditions for pure solvent flow
     cond['Pout']         = Pout
     cond['Pper']         = Pper
     cond['DLP']          = DLP
-    cond['u_HP']         = u_HP
+    cond['u_ast']         = u_ast
     cond['vw0']          = vw0
     cond['alpha_ast']    = alpha_ast
     cond['beta_ast']     = beta_ast
@@ -111,21 +111,32 @@ def get_cond(pre_cond, Pin, Pout, Pper): # conditions for pure solvent flow
     cond['COND']         = COND_TYPE
     cond['DTP_HP']       = DTP_HP
     cond['DTP_PS']       = DTP_PS
-# {            'u_HP':u_HP, 'vw0':vw0, 'alpha_ast':alpha_ast, 'beta_ast':beta_ast,\
+# {            'u_ast':u_ast, 'vw0':vw0, 'alpha_ast':alpha_ast, 'beta_ast':beta_ast,\
 #             'Pper_div_DLP':Pper/DLP, 'COND':COND_TYPE,\
 #             'DTP_HP':DTP_HP, 'DTP_PS':DTP_PS}
     return cond
 
 
-def get_Apm(pm, k, alpha_ast):
+def get_Apm_BCP(pm, k, alpha_ast):
     """ Get dimensionless Apm using Eq. (32)
     """
     return pm*(1./(4.*sinh(k)))*(2.*alpha_ast - 1. - (2.*alpha_ast + 1)*exp(-pm*k))
 
-def get_Apm_conv(pm, cond):
-    """ Convinience version for get_Apm using cond
+def get_Apm_BCP_conv(pm, cond):
+    """ Convinience version for get_Apm_BCP using cond
     """
-    return get_Apm(pm, cond['k'], cond['alpha_ast'])
+    return get_Apm_BCP(pm, cond['k'], cond['alpha_ast'])
+
+def get_Apm_BCu(pm, k, alpha_ast):
+    """ Get dimensionless Apm using Eq. (32)
+    """
+    return pm*(1./(4.*sinh(k)))*(2.*alpha_ast - 1. - (2.*alpha_ast + 1)*exp(-pm*k))
+
+def get_Apm_BCu_conv(pm, cond):
+    """ Convinience version for get_Apm_BCP using cond
+    """
+    return get_Apm_BCP(pm, cond['k'], cond['alpha_ast'])
+
 
 def get_P(z_div_L, k, Ap, Am, Pper_div_DLP):
     """ Using Eq. (31) (the first expression)
@@ -144,9 +155,6 @@ def get_u(r_div_R, z_div_L, k, Ap, Am, lam1):
 
 def get_u_conv(r_div_R, z_div_L, cond):
     return get_u(r_div_R, z_div_L, cond['k'], cond['Ap'], cond['Am'], cond['lam1'])
-
-
-    
 
 def get_v(r_div_R, z_div_L, k, alpha_ast, Ap, Am, membrane_geometry):
     """ Using Eq. (31) (the third expression)

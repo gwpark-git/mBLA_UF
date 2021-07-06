@@ -221,11 +221,11 @@ def gen_analysis(z_arr, y_div_R_arr, phiw_arr, cond_GT, fcn_Pi_given, fcn_Dc_giv
         GT.gen_INT_inv_f_wrt_yt(y_div_R_arr, phi_arr_zi, Ieta_arr_zi, fcn_eta_given, cond_GT)
         GT.gen_INT_inv_f_wrt_yt(y_div_R_arr, phi_arr_zi, ID_arr_zi, fcn_Dc_given, cond_GT)
 
-        re[i, 4] = cond_GT['u_HP']*GT.get_u_conv(r0_div_R, zi_div_L, cond_GT, gp_arr[i], gm_arr[i], Ieta_arr_zi[-1])
+        re[i, 4] = cond_GT['u_ast']*GT.get_u_conv(r0_div_R, zi_div_L, cond_GT, gp_arr[i], gm_arr[i], Ieta_arr_zi[-1])
         re[i, 5] = Pi_arr[i]
         re[i, 6] = re[i, 2] - cond_GT['Pper']
         re[i, 7] = re[i, 3]/cond_GT['vw0']
-        re[i, 8] = re[i, 4]/cond_GT['u_HP']
+        re[i, 8] = re[i, 4]/cond_GT['u_ast']
 
         Phi_z = 0. # Using Eq. (50)
         Phi_ex_z = 0. # Using Eq. (60)
@@ -253,7 +253,7 @@ def gen_analysis(z_arr, y_div_R_arr, phiw_arr, cond_GT, fcn_Pi_given, fcn_Dc_giv
             Phi_ex_z += 0.5 * dy * (j_ex_1*J_r1 + j_ex_2*J_r2)
             Phi_b_z += 0.5 * dy * (j_b_1*J_r1 + j_b_2*J_r2)
             
-            re[i, 9] = Phi_z * 2. * pi * cond_GT['u_HP']*cond_GT['R']**2.0
+            re[i, 9] = Phi_z * 2. * pi * cond_GT['u_ast']*cond_GT['R']**2.0
             re[i, 10] = Phi_z
             re[i, 11] = Phi_ex_z
             re[i, 12] = Phi_b_z

@@ -282,7 +282,7 @@ def cal_F1_Z(vw_div_vw0, ed, yt_arr, Ieta_arr, ID_arr, uZ_zi, membrane_geometry)
 
 def cal_Phi_div_Phiast_conv(phiw, phi_bulk, F1_Z, F2_Z):
     """ [Auxiliary function] Calculate Phi(z)/Phi_ast using definition of F1_Z and F2_Z in cal_int_Fz, and Eqs. (49), (50), (D1).
-    The original definition of Phi(z) in Eq. (50) is divided by Phi_ast=pi*R^2*phi_bulk*u_HP in accordance with caption of Fig. 11.
+    The original definition of Phi(z) in Eq. (50) is divided by Phi_ast=pi*R^2*phi_bulk*u_ast in accordance with caption of Fig. 11.
     By definition of T_z[phi] in Eq. (D1), Phi(z)/Phi_ast = (2/phi_bulk)*T_z[phi].
     By definition of matched asymptotic phi in Eq. (49), phi = (phiw - phi_bulk)*exp(-s_bar) + phi_bulk*(1 - s_bar*exp(-s_bar)).
     Therefore, we have Phi(z)/Phi_ast = (2/phi_bulk)*((phiw - phi_bulk)*F1_Z + phi_bulk*F2_Z),
