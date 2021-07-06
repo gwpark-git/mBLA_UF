@@ -122,14 +122,19 @@ if __name__ == '__main__' :
         # print('dimensionless quantities (lam1, lam2, k) = ', lam1, lam2, k)
         # k = get_K(lam1, lam2, membrane_geometry, R_channel, L_channel, Lp, eta0)
         # k = 4.*sqrt(L_channel**2.0 * Lp * eta0 /R_channel**3.0)            # dimensionless parameter k
+        if BC_inlet == 'velocity':
+            u_ast = u_inlet
+            DLP = get_DLP_from_uin(u_ast, lam1, eta0, R_channel, L_channel)
+        elif BC_inlet == 'pressure':
+            u_ast = R_channel**2.0 * DLP/(4.*eta0*L_channel) # u_ast = u_HP when pressure inlet BC is used
         
-        Pin = PS.get_Pin(DLP, ref_Pout)                                       # calculating Pin for the given DLP and Pout
+        Pin_ast = PS.get_Pin_ast(DLP, ref_Pout)                                       # calculating Pin_ast for the given DLP and Pout
         Pper = PS.get_Pper(DLP, ref_DTP, k, ref_Pout)                         # calculating Pper for the given DLP, DTP_linear, k, and P_out
 
-        pre_cond = {'k':k, 'R':R_channel, 'L':L_channel, 'Lp':Lp, 'eta0':eta0, 'membrane_geometry':membrane_geometry, 'lam1':lam1, 'lam2':lam2, 'define_permeability':define_permeability, 'h':h_membrane, 'kappa_Darcy':kappa_Darcy, 'BC_inlet':BC_inlet}
-        cond_PS = PS.get_cond(pre_cond, Pin, ref_Pout, Pper)                  # allocating Blank Test (pure test) conditions
+        pre_cond = {'k':k, 'R':R_channel, 'L':L_channel, 'Lp':Lp, 'eta0':eta0, 'membrane_geometry':membrane_geometry, 'lam1':lam1, 'lam2':lam2, 'define_permeability':define_permeability, 'h':h_membrane, 'kappa_Darcy':kappa_Darcy, 'BC_inlet':BC_inlet, 'DLP':DLP}
+        cond_PS = PS.get_cond(pre_cond, Pin_ast, ref_Pout, Pper, u_ast)                  # allocating Blank Test (pure test) conditions
 
-        DTP_HP = (1/2.)*(Pin + ref_Pout) - Pper                            # length-averaged TMP with a linearly declined pressure approximation
+        DTP_HP = (1/2.)*(Pin_ast + ref_Pout) - Pper                            # length-averaged TMP with a linearly declined pressure approximation
         vw0 = cond_PS['Lp']*DTP_HP                                         # v^\ast
         epsilon_d = D0/(cond_PS['R']*vw0)                                  # 1/Pe_R
 
@@ -176,8 +181,8 @@ if __name__ == '__main__' :
             CT.gen_gpm_arr(sign_plus,  z_div_L_arr, Pi_div_DLP_arr, k, gp_arr)
             CT.gen_gpm_arr(sign_minus, z_div_L_arr, Pi_div_DLP_arr, k, gm_arr)
             cond_GT['Gk'] = CT.get_Gk_boost(k, dz_div_L, gp_arr[-1], gm_arr[-1])
-            cond_GT['Bp'] = CT.get_Bpm_BCP_conv(sign_plus, cond_GT)
-            cond_GT['Bm'] = CT.get_Bpm_BCP_conv(sign_minus, cond_GT)
+            cond_GT['Bp'] = CT.get_Bpm_conv(sign_plus, cond_GT)
+            cond_GT['Bm'] = CT.get_Bpm_conv(sign_minus, cond_GT)
 
             GT.gen_new_phiw_div_phib_arr(N_PROCESSES, phiw_set_2, cond_GT, fcn_Dc_given, fcn_eta_given, z_div_L_arr, phiw_set_1, Pi_div_DLP_arr, cond_GT['weight'], gp_arr, gm_arr, y_div_R_arr, phi_yt_arr, ID_yt_arr, Ieta_yt_arr)
 
@@ -193,3 +198,4 @@ if __name__ == '__main__' :
 
 
 
+        

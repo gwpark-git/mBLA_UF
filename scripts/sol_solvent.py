@@ -24,30 +24,37 @@
 from numpy import *
 from membrane_geometry_functions import *
 
-def cal_DTP_HP(Pin, Pout, Pper):
+def cal_DTP_HP(Pin_ast, Pout, Pper):
     """ Calculate Delta_T P for Hagen-Poiseuille (HP) flow using Eq. (8)
     No particle-contributed osmotic pressure
     """
-    return (1/2.)*(Pin + Pout) - Pper
+    return (1/2.)*(Pin_ast + Pout) - Pper
 
-def cal_DTP_PS(Pin, Pout, Pper, k):
+def cal_DTP_PS(Pin_ast, Pout, Pper, k):
     """ Calculate Delta_T P for Pure Solvent (PS) flow using Eqs. (8) and (34)
     No particle-contributed osmotic pressure
     """
-    return cal_DTP_HP(Pin, Pout, Pper) * 2. * tanh(k/2.)/k
+    return cal_DTP_HP(Pin_ast, Pout, Pper) * 2. * tanh(k/2.)/k
 
-def get_Pin(DLP, Pout):
-    """ Calculate Pin for given DLP and Pout
+def get_Pin_ast(DLP, Pout):
+    """ Calculate Pin_ast for given DLP (or DLP_ast) and Pout
     """
     return DLP + Pout
 
 def get_Pper(DLP, DTP_HP, k, Pout):
     """ Calculate Pper for given DLP, DTP_HP, k, and Pout
     It is noteworthy that the given DTP is DTP_HP in Eq. (8).
+
+    [TODO-CHECK]: 
+        The current base units used the linear-approximated pressure boundary condition of pure solvent flow.
+        In pure solvent flow, there is no actual difference between the pressure or velocity boundary condition at the inlet.
+        Therefore, the assumption made here is that the actual base unit will be the same.
+        Meanwhile, the overall effect to the suspension flow has not been checked yet, which must be verified future.
+
     """
     return (1./2.)*DLP - DTP_HP/(2.*tanh(k/2.)/k) + Pout
 
-def get_cond(pre_cond, Pin, Pout, Pper): # conditions for pure solvent flow
+def get_cond(pre_cond, Pin_ast, Pout, Pper, uin_ast): # conditions for pure solvent flow
     """ return dictionary "cond" of conditions for pure solvent flow (Sec. IV A)
     dictionary "cond":
     inherite from dictionary "pre_cond" parameter described below.
@@ -70,9 +77,10 @@ def get_cond(pre_cond, Pin, Pout, Pper): # conditions for pure solvent flow
             'h'    : thickness of membrane. if Lp is given, 'h' is not important. However, it just set with R/2 as a reference.
             'kappa_Darcy' : Darcy's permeability. If Lp is provided, this value is just recalculated based on h=R/2. 
             'BC_inlet' : Specified boundary condition at the inlet either 'pressure' or 'velocity'
+            'DLP' : DLP = Pin - Pout when BC is given by P(0)=Pin. If BC is given by u(0,0)=u_ast, DLP_ast = Pin_ast - Pout, which still has the same name with DLP
 
 
-        Pin      = Pressure inlet boundary condition  in the unit of Pa
+        Pin_ast      = Pressure inlet boundary condition  in the unit of Pa
         Pout     = Pressure outlet boundary condition in the unit of Pa
         Pper     = Pressure in permeate which affect to Darcy-Starling law in Eq. (12) 
                                                       in the unit of Pa
@@ -86,24 +94,21 @@ def get_cond(pre_cond, Pin, Pout, Pper): # conditions for pure solvent flow
     
     # k = pre_cond['k'] # it is a given parameter
     
-    DLP = Pin - Pout                    # Longitudinal pressure difference
-    DTP_HP = cal_DTP_HP(Pin, Pout, Pper) # Length-averaged TMP with linear pressure approximation in Eq. (8)
-    DTP_PS = cal_DTP_PS(Pin, Pout, Pper, pre_cond['k']) # Length-averaged TMP for pure solvent flow in Eq. (7)
+    # DLP = Pin_ast - Pout                    # Longitudinal pressure difference
+    DLP = pre_cond['DLP']
+    DTP_HP = cal_DTP_HP(Pin_ast, Pout, Pper) # Length-averaged TMP with linear pressure approximation in Eq. (8)
+    DTP_PS = cal_DTP_PS(Pin_ast, Pout, Pper, pre_cond['k']) # Length-averaged TMP for pure solvent flow in Eq. (7)
     vw0 = pre_cond['Lp']*DTP_HP         # v^\ast in Eq. (21)
     alpha_ast = DTP_HP/DLP              # alpha^\ast in Eq. (23)
     beta_ast = pre_cond['k']**2.0 * alpha_ast       # beta^\ast in Eq. (24) and (26)
-    u_ast = pre_cond['R']**2.0 * DLP/(4.*pre_cond['eta0']*pre_cond['L']) # u_ast = u_HP when pressure inlet BC is used
-    
-    Ap = get_Apm_BCP(+1.0, pre_cond['k'], alpha_ast)
-    Am = get_Apm_BCP(-1.0, pre_cond['k'], alpha_ast)
+    # u_ast = pre_cond['R']**2.0 * DLP/(4.*pre_cond['eta0']*pre_cond['L']) # u_ast = u_HP when pressure inlet BC is used
+    u_ast = uin_ast
 
-    cond['Ap']           = Ap
-    cond['Am']           = Am
-    cond['Pin']          = Pin
+    cond['Pin_ast']      = Pin_ast
     cond['Pout']         = Pout
     cond['Pper']         = Pper
     cond['DLP']          = DLP
-    cond['u_ast']         = u_ast
+    cond['u_ast']        = u_ast
     cond['vw0']          = vw0
     cond['alpha_ast']    = alpha_ast
     cond['beta_ast']     = beta_ast
@@ -111,6 +116,9 @@ def get_cond(pre_cond, Pin, Pout, Pper): # conditions for pure solvent flow
     cond['COND']         = COND_TYPE
     cond['DTP_HP']       = DTP_HP
     cond['DTP_PS']       = DTP_PS
+    cond['Ap']           = get_Apm_conv(+1.0, cond)
+    cond['Am']           = get_Apm_conv(-1.0, cond)
+    
 # {            'u_ast':u_ast, 'vw0':vw0, 'alpha_ast':alpha_ast, 'beta_ast':beta_ast,\
 #             'Pper_div_DLP':Pper/DLP, 'COND':COND_TYPE,\
 #             'DTP_HP':DTP_HP, 'DTP_PS':DTP_PS}
@@ -127,15 +135,29 @@ def get_Apm_BCP_conv(pm, cond):
     """
     return get_Apm_BCP(pm, cond['k'], cond['alpha_ast'])
 
-def get_Apm_BCu(pm, k, alpha_ast):
-    """ Get dimensionless Apm using Eq. (32)
+def get_Apm_BCu(pm, k, Pout, Pper, DLP_ast):
+    """ Get dimensionless Apm with BCu
     """
-    return pm*(1./(4.*sinh(k)))*(2.*alpha_ast - 1. - (2.*alpha_ast + 1)*exp(-pm*k))
+    # return pm*(1./(4.*sinh(k)))*(2.*alpha_ast - 1. - (2.*alpha_ast + 1)*exp(-pm*k))
+    return (1./(2.*cosh(k)))*((Pout - Pper)/DLP_ast - pm * (1./k)*exp(-pm * k))
 
 def get_Apm_BCu_conv(pm, cond):
     """ Convinience version for get_Apm_BCP using cond
     """
-    return get_Apm_BCP(pm, cond['k'], cond['alpha_ast'])
+    return get_Apm_BCu(pm, cond['k'], cond['Pout'], cond['Pper'], cond['DLP'])
+
+def get_Apm_conv(pm, cond):
+    """ Calls get_Apm_BCP_conv or get_Apm_BCu_conv depend on BC_inlet condition
+    """
+    if cond['BC_inlet'] == 'velocity':
+        return get_Apm_BCu_conv(pm, cond)
+        
+    elif cond['BC_inlet'] == 'pressure':
+        return get_Apm_BCP_conv(pm, cond)
+
+    print ('BC_inlet is not well-defined. By default, we force to put BC_inlet == pressure')
+    return get_Apm_BCP_conv(pm, cond)
+
 
 
 def get_P(z_div_L, k, Ap, Am, Pper_div_DLP):

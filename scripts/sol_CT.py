@@ -68,9 +68,23 @@ def get_cond(cond_PS, phi_bulk, a_colloid, a_hydrodynamic, Va, kT, dz, Gk):
 
     sign_plus = +1.
     sign_minus = -1.
-    
-    re['Bp']   = get_Bpm_BCP_conv(sign_plus, re)
-    re['Bm']   = get_Bpm_BCP_conv(sign_minus, re)
+
+
+    re['Bp']   = get_Bpm_conv(sign_plus, re)  # automatically identify BC_inlet condition inside the function
+    re['Bm']   = get_Bpm_conv(sign_minus, re) # automatically identify BC_inlet condition inside the function
+
+    # if re['BC_inlet'] == 'velocity':
+    #     re['Bp']   = get_Bpm_BCu_conv(sign_plus, re)
+    #     re['Bm']   = get_Bpm_BCu_conv(sign_minus, re)
+
+    # elif re['BC_inlet'] == 'pressure':
+    #     re['Bp']   = get_Bpm_BCP_conv(sign_plus, re)
+    #     re['Bm']   = get_Bpm_BCP_conv(sign_minus, re)
+    # else:
+    #     print ('BC_inlet is not well-defined. By default, we force to put BC_inlet == pressure')
+    #     re['Bp']   = get_Bpm_BCP_conv(sign_plus, re)
+    #     re['Bm']   = get_Bpm_BCP_conv(sign_minus, re)
+        
 
     return re
 
@@ -154,6 +168,51 @@ def get_Bpm_BCP_conv(pm, cond_GT):
         return cond_GT['Ap'] - cond_GT['Gk']
     # for Bm
     return cond_GT['Am'] + cond_GT['Gk']
+
+
+def get_Bpm_BCu(pm, k, Pout, Pper, DLP_ast, Gk):
+    """ [Overhead version] Using expression for Bpm in the new boundary condition
+    Note that "- pm * Gk" replaced by "- Gk" since it uses u(0,0) boundary condition.
+    """
+    return PS.get_Apm_BCu(pm, k, Pout, Pper, DLP_ast) - Gk
+
+def get_Bpm_BCu_conv(pm, cond_GT):
+    """ Using expression for Bpm with new boundary condition
+    cond_GT must stored the proper values of 'Ap' and 'Am', and 'Gk'.
+    Otherwise, this convenient function will not properly work.
+
+    Note that the sign of Gk must be negative since it uses the boundary condition u(0,0).
+    """
+    
+    
+    if pm > 0: # for Bp
+        return cond_GT['Ap'] - cond_GT['Gk']
+    # for Bm
+    return cond_GT['Am'] - cond_GT['Gk']
+
+def get_Bpm_conv(pm, cond_GT):
+    """ Automatically check the BC_inlet inside the function. Then, call the relevant functions such as get_Bpm_BCP_conv or get_Bpm_BCu_conv.
+
+    cond_GT must stored the proper values of 'Ap' and 'Am', and 'Gk'.
+    Otherwise, this convenient function will not properly work.
+
+    Note that the sign of Gk must be negative since it uses the boundary condition u(0,0).
+    """
+    if cond_GT['BC_inlet'] == 'velocity':
+        return get_Bpm_BCu_conv(pm, cond_GT)
+
+    elif cond_GT['BC_inlet'] == 'pressure':
+        return get_Bpm_BCP_conv(pm, cond_GT)
+
+    print ('BC_inlet is not well-defined. By default, we force to put BC_inlet == pressure')
+    return get_Bpm_BCP_conv(pm, cond_GT)
+
+    # if pm > 0: # for Bp
+    #     return cond_GT['Ap'] - cond_GT['Gk']
+    # # for Bm
+    # return cond_GT['Am'] - cond_GT['Gk']
+
+
 
 
 def get_P(r_div_R, z_div_L, Pper_div_DLP, k, Bp, Bm, gp, gm):

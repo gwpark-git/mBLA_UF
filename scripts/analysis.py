@@ -67,9 +67,10 @@ def print_preface(fn_inp, fn_out, fn_out_log, f_log):
     
 
 def print_summary(cond_GT, f_log=None):
-    print ('\nSystem and operating conditions (', cond_GT['membrane_geometry'], '):')
+    print ('\nSystem and operating conditions ( geometry = ', cond_GT['membrane_geometry'], '/ BC_inlet = ', cond_GT['BC_inlet'], ' ):')
     print ('  - Summary of dimensional quantities (in SI units):')
-    print ('\tPin=%9d,   Pper=%9d, ref_Pout=%9d '%(int(cond_GT['Pin']), int(cond_GT['Pper']), int(cond_GT['Pout'])))
+    print ('\tPin_ast=%9d,   Pper=%9d, ref_Pout=%9d '%(int(cond_GT['Pin_ast']), int(cond_GT['Pper']), int(cond_GT['Pout'])))
+    print ('\tu_ast=%lf'%(cond_GT['u_ast']))
     print ('\tDLP=%9d, DTP_PS=%9d,   DTP_HP=%9d '%(int(cond_GT['DLP']), int(cond_GT['DTP_PS']), int(cond_GT['DTP_HP'])))
     print ('\tLp =%4.3e,   eta0=%4.3e,        R=%4.3e,        L=%4.3e'%(cond_GT['Lp'], cond_GT['eta0'], cond_GT['R'], cond_GT['L']))
     print ('\ta  =%4.3e,    a_H=%4.3e,       D0=%4.3e,  Phi_ast=%4.3e'%(cond_GT['a'], cond_GT['a_H'], cond_GT['D0'], cond_GT['Phi_ast']))
@@ -90,8 +91,8 @@ def print_summary(cond_GT, f_log=None):
 
     if not f_log.closed:
         f_log.write('\nSystem and operating conditions:\n' )
-        f_log.write('  - Summary of dimensional quantities (in SI units):\n')
-        f_log.write('\tPin=%9d,   Pper=%9d, ref_Pout=%9d \n'%(int(cond_GT['Pin']), int(cond_GT['Pper']), int(cond_GT['Pout'])))
+        f_log.write('  - Summary of dimensional quantities (in SI units):\n')        
+        f_log.write('\tPin_ast=%9d,   Pper=%9d, ref_Pout=%9d \n'%(int(cond_GT['Pin_ast']), int(cond_GT['Pper']), int(cond_GT['Pout'])))
         f_log.write('\tDLP=%9d, DTP_PS=%9d,   DTP_HP=%9d \n'%(int(cond_GT['DLP']), int(cond_GT['DTP_PS']), int(cond_GT['DTP_HP'])))
         f_log.write('\tLp =%4.3e,   eta0=%4.3e,        R=%4.3e,  L=%4.3e\n'%(cond_GT['Lp'], cond_GT['eta0'], cond_GT['R'], cond_GT['L']))
         f_log.write('\ta  =%4.3e,    a_H=%4.3e,       D0=%4.3e\n'%(cond_GT['a'], cond_GT['a_H'], cond_GT['D0']))
@@ -127,6 +128,7 @@ def print_iteration_info(n, z_div_L_arr, phiw_set_1, phiw_set_2, cond_GT, Pi_div
     report_step[5] = length_average_f(z_div_L_arr, report_P_div_DLP_arr - cond_GT['Pper_div_DLP'], L_div_L, dz_div_L)*cond_GT['DLP']/cond_GT['DTP_HP']
     print('iter=%d, chi_A=%4.3e'%(report_step[0], chi_A))
     print('\tz_max=%4.3f, phiw(z_max)=%.4f, phiw(L)=%.4f\n\t<Pi>/DTP_HP=%4.3e, DTP/DTP_HP=%4.3e'%(report_step[1], report_step[2], report_step[3], report_step[4], report_step[5]))
+    print('\tP(0)/Pin_ast=%4.3f, re-calculated u(0,0)/u_ast=%4.3f\n'%(report_P_div_DLP_arr[0], (report_P_div_DLP_arr[0] - report_P_div_DLP_arr[1])/(z_div_L_arr[1] - z_div_L_arr[0])))
     print()
     if not f_log.closed:
         if(n==0):
@@ -194,6 +196,7 @@ def gen_analysis(z_arr, y_div_R_arr, phiw_arr, cond_GT, fcn_Pi_given, fcn_Dc_giv
     CT.gen_gpm_arr(sign_plus,  z_div_L_arr, Pi_div_DLP_arr, cond_GT['k'], gp_arr)
     CT.gen_gpm_arr(sign_minus, z_div_L_arr, Pi_div_DLP_arr, cond_GT['k'], gm_arr)
     cond_GT['Gk'] = CT.get_Gk_boost(cond_GT['k'], dz_div_L, gp_arr[-1], gm_arr[-1])
+
     cond_GT['Bp'] = CT.get_Bpm_conv(sign_plus, cond_GT)
     cond_GT['Bm'] = CT.get_Bpm_conv(sign_minus, cond_GT)
 

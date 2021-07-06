@@ -1,5 +1,12 @@
 from numpy import *
 
+def get_DLP_from_uin(u_ast, lam1, eta_s, R_channel, L_channel):
+    # this will calculate DLP_ast based on the linear approximation for P
+    # i.e., a constant approximation for u.
+    
+    DLP_ast = u_ast * lam1 * eta_s * L_channel/R_channel**2.0;
+    return DLP_ast
+
 def get_Lp_from_kappa_Darcy(membrane_geometry, kappa_Darcy, h_membrane, R_channel, eta0):
     # the default is when membrane_geometry = 'HF'
     Lp = kappa_Darcy / (eta0 * R_channel * log(1. + h_membrane/R_channel))

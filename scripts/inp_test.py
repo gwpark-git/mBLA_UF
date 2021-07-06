@@ -1,4 +1,4 @@
-<#############################################################################
+#############################################################################
 #   Test input file for mBLA_UF code                                        #
 #                                                                           #
 #   Used in the paper:                                                      #
@@ -46,9 +46,9 @@ BC_inlet = 'pressure'
                           # the case 'pressure': P_in will be re-calculated based on the DLP and ref_Pout. Then u_ast will be set with u_HP
                           # the case 'velocity': u(0,0) will be specified based on u_ast value. Then, u_ast is replaced by the value itself.
                           # for 'pressure':
-DLP = 130                 # Pa         : Longitudinal pressure difference
+# DLP = 130                 # Pa         : Longitudinal pressure difference
                           # fore 'velocity':
-                          # u_ast = 0.01625 # m/s: the reference value 
+u_inlet = 0.01625 # m/s: the reference value 
 ref_Pout = 101325         # Pa         : Outlet pressure
 ref_DTP = 5000            # Pa         : Transmembrane pressure (linear approximation)
 
