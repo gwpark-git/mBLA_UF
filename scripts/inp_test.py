@@ -50,7 +50,13 @@ BC_inlet = 'pressure'
                           # fore 'velocity':
 u_inlet = 0.01625 # m/s: the reference value 
 ref_Pout = 101325         # Pa         : Outlet pressure
+
+BC_perm = 'DTP'  # either DTP or Pperm
 ref_DTP = 5000            # Pa         : Transmembrane pressure (linear approximation)
+
+# BC_perm = 'Pper'  # either DTP or Pperm
+# ref_Pperm = 96381 # test
+# ref_DTP = 5000            # Pa         : Transmembrane pressure (linear approximation)
 
 
 N_iter = 100              # Maximum iteration for FPI

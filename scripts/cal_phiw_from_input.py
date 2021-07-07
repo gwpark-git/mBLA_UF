@@ -131,7 +131,13 @@ if __name__ == '__main__' :
             
         
         Pin_ast = PS.get_Pin_ast(DLP, ref_Pout)                                       # calculating Pin_ast for the given DLP and Pout
-        Pper = PS.get_Pper(DLP, ref_DTP, k, ref_Pout)                         # calculating Pper for the given DLP, DTP_linear, k, and P_out
+        if BC_perm == 'Pperm':
+            print('BC_perm is set with Pperm: this will re-calculate ref_DTP using linear-approximated value.')
+            ref_DTP = PS.cal_DTP_HP(Pin_ast, ref_Pout, ref_Pperm)
+            Pper = ref_Pperm
+        else:
+            print('BC_perm is set with DTP (or not-specified): this will use ref_DTP to determine Pperm. This has advantage when we want to compare BCP and BCu cases.')
+            Pper = PS.get_Pper(DLP, ref_DTP, k, ref_Pout)                         # calculating Pper for the given DLP, DTP_linear, k, and P_out
 
         pre_cond = {'k':k, 'R':R_channel, 'L':L_channel, 'Lp':Lp, 'eta0':eta0, 'membrane_geometry':membrane_geometry, 'lam1':lam1, 'lam2':lam2, 'define_permeability':define_permeability, 'h':h_membrane, 'kappa_Darcy':kappa_Darcy, 'BC_inlet':BC_inlet, 'DLP':DLP}
         cond_PS = PS.get_cond(pre_cond, Pin_ast, ref_Pout, Pper, u_ast)                  # allocating Blank Test (pure test) conditions
