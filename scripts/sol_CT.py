@@ -73,6 +73,7 @@ def get_cond(cond_PS, phi_bulk, a_colloid, a_hydrodynamic, Va, kT, dz, Gk):
     re['Bp']   = get_Bpm_conv(sign_plus, re)  # automatically identify BC_inlet condition inside the function
     re['Bm']   = get_Bpm_conv(sign_minus, re) # automatically identify BC_inlet condition inside the function
 
+    re['denom_Gk_BC_specific'] = get_denom_Gk_BC_specific(re['k'], re['BC_inlet'])
     # if re['BC_inlet'] == 'velocity':
     #     re['Bp']   = get_Bpm_BCu_conv(sign_plus, re)
     #     re['Bm']   = get_Bpm_BCu_conv(sign_minus, re)
@@ -125,13 +126,17 @@ def gen_gpm_arr(pm, z_div_L_arr, Pi_div_DLP_arr, k, gpm_arr):
         gpm_arr[i] = pm * re * k/2.
     return 0
 
-def get_Gk(k, dz_div_L, Pi_div_DLP_arr):
+def get_Gk(k, dz_div_L, Pi_div_DLP_arr, denom_Gk_BC_specific):
     """ [Overhead version] Using expression "Gk = -(Bp - Ap) = Bm - Am" in Eq. (46)
     Note that Gk is sign independent (pm)
 
     This is an overhead version for computing Gk because it needs gp1 and gm1 (defined inside function)
     which takes the numerical integration from z=0 to z=given z.
     Therefore, it would be recommendable to use get_Gk_boost where it gives the values of gp1 and gm1 as parameters.
+
+    Note that the original article uses denom_Gk_BC_specific  = 2 sinh(k), which is valid for the inlet pressure condition.
+    When the inlet velocity condition is used, denom_Gk_BC_specific = 2 cosh(k). This is related to the new manuscript.
+
     """
     sign_plus = +1.
     sign_minus = -1.
@@ -141,17 +146,27 @@ def get_Gk(k, dz_div_L, Pi_div_DLP_arr):
     gp1 = get_gpm(sign_plus, L_div_L, dz_div_L, Pi_div_DLP_arr, k)
     gm1 = get_gpm(sign_minus, L_div_L, dz_div_L, Pi_div_DLP_arr, k)
 
-    return (gp1 * exp(-k) + gm1 * exp(k))/(2.*sinh(k))
+    # return (gp1 * exp(-k) + gm1 * exp(k))/(2.*sinh(k))
+    return (gp1 * exp(-k) + gm1 * exp(k))/denom_Gk_BC_specific
 
 
-def get_Gk_boost(k, dz_div_L, gp1, gm1):
+def get_Gk_boost(k, dz_div_L, gp1, gm1, denom_Gk_BC_specific):
     """ Using expression "Gk = -(Bp - Ap) = Bm - Am" in Eq. (46)
     Note that Gk is sign independent (pm).
 
     Because get_Gk_boost takes parameters of gp1 and gm1, this function do not require other parameters.
     """
-    return (gp1 * exp(-k) + gm1 * exp(k))/(2.*sinh(k))
+    # return (gp1 * exp(-k) + gm1 * exp(k))/(2.*sinh(k))
+    return (gp1 * exp(-k) + gm1 * exp(k))/denom_Gk_BC_specific
 
+def get_denom_Gk_BC_specific(k, BC_inlet):
+    if BC_inlet=='velocity':
+        return 2.*cosh(k)
+    elif BC_inlet=='pressure':
+        return 2.*sinh(k)
+    print ('BC_inlet is not well-defined. By default, we force to put BC_inlet == pressure')
+    return 2.*sinh(k)
+    
 
 def get_Bpm_BCP(pm, k, alpha_ast, Gk):
     """ [Overhead version] Using expression for Bpm in Eq. (47)
@@ -183,8 +198,7 @@ def get_Bpm_BCu_conv(pm, cond_GT):
 
     Note that the sign of Gk must be negative since it uses the boundary condition u(0,0).
     """
-    
-    
+        
     if pm > 0: # for Bp
         return cond_GT['Ap'] - cond_GT['Gk']
     # for Bm
@@ -231,7 +245,8 @@ def get_u(r_div_R, z_div_L, k, Bp, Bm, gp, gm, lam1):
     because matched asymptotic u in Eq. (49) with constant transport properties
     give the same expression as u^out in Eq. (45)
     """
-    uR_HP = (1. - r_div_R**2.0)*lam1/2.
+    # uR_HP = (1. - r_div_R**2.0)*lam1/2.
+    uR_HP = (1. - r_div_R**2.0)
     uZ_out = -k*(exp( k*z_div_L)*(Bp + gm) \
                  -exp(-k*z_div_L)*(Bm + gp))
     return uZ_out*uR_HP

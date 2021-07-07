@@ -171,7 +171,8 @@ def get_P_conv(z_div_L, cond):
 def get_u(r_div_R, z_div_L, k, Ap, Am, lam1):
     """ Using Eq. (31) (the second expression)
     """
-    uR_HP = (1. - r_div_R**2.0)*lam1/2.
+    # uR_HP = (1. - r_div_R**2.0)*lam1/2.
+    uR_HP = (1. - r_div_R**2.0)
     uZ_PS = -k*(exp( k*z_div_L)*Ap - exp(-k*z_div_L)*Am)
     return uZ_PS*uR_HP
 

@@ -78,7 +78,8 @@ def get_u(r_div_R, z_div_L, k, Bp, Bm, gp, gm, lam1, int_Y):
     u_Z^out is given in following Eq. (45)
     """
     
-    uR = (lam1/2.)*(1. + r_div_R)*int_Y
+    # uR = (lam1/2.)*(1. + r_div_R)*int_Y
+    uR = (1. + r_div_R)*int_Y
     uZ_out = -k*(exp(k*z_div_L)*(Bp + gm) \
                  - exp(-k*z_div_L)*(Bm + gp))
 

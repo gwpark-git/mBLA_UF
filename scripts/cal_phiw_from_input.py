@@ -126,7 +126,9 @@ if __name__ == '__main__' :
             u_ast = u_inlet
             DLP = get_DLP_from_uin(u_ast, lam1, eta0, R_channel, L_channel)
         elif BC_inlet == 'pressure':
-            u_ast = R_channel**2.0 * DLP/(4.*eta0*L_channel) # u_ast = u_HP when pressure inlet BC is used
+            # u_ast = R_channel**2.0 * DLP/(4.*eta0*L_channel) # u_ast = u_HP when pressure inlet BC is used
+            u_ast = R_channel**2.0 * DLP/(lam1*eta0*L_channel) # u_ast = u_HP when pressure inlet BC is used
+            
         
         Pin_ast = PS.get_Pin_ast(DLP, ref_Pout)                                       # calculating Pin_ast for the given DLP and Pout
         Pper = PS.get_Pper(DLP, ref_DTP, k, ref_Pout)                         # calculating Pper for the given DLP, DTP_linear, k, and P_out
@@ -142,7 +144,7 @@ if __name__ == '__main__' :
         Pi_arr = zeros(size(phiw_arr))                                     # Set zero osmotic pressure
         Pi_div_DLP_arr = Pi_arr/cond_PS['DLP']
 
-        Gk_tmp = CT.get_Gk(cond_PS['k'], dz_div_L, Pi_div_DLP_arr)
+        Gk_tmp = CT.get_Gk(cond_PS['k'], dz_div_L, Pi_div_DLP_arr, CT.get_denom_Gk_BC_specific(cond_PS['k'], cond_PS['BC_inlet']))
         cond_CT = CT.get_cond(cond_PS, phi_bulk, a_particle, a_H, Va, kT, dz, Gk_tmp)     # allocating conditions for the constant transport properties
         cond_GT = GT.get_cond(cond_CT, Nr, weight) # allocating conditions for the general transport properties
 
@@ -180,7 +182,7 @@ if __name__ == '__main__' :
 
             CT.gen_gpm_arr(sign_plus,  z_div_L_arr, Pi_div_DLP_arr, k, gp_arr)
             CT.gen_gpm_arr(sign_minus, z_div_L_arr, Pi_div_DLP_arr, k, gm_arr)
-            cond_GT['Gk'] = CT.get_Gk_boost(k, dz_div_L, gp_arr[-1], gm_arr[-1])
+            cond_GT['Gk'] = CT.get_Gk_boost(k, dz_div_L, gp_arr[-1], gm_arr[-1], cond_GT['denom_Gk_BC_specific'])
             cond_GT['Bp'] = CT.get_Bpm_conv(sign_plus, cond_GT)
             cond_GT['Bm'] = CT.get_Bpm_conv(sign_minus, cond_GT)
 
