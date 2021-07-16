@@ -126,7 +126,7 @@ def print_iteration_info(n, z_div_L_arr, phiw_set_1, phiw_set_2, cond_GT, Pi_div
         report_P_div_DLP_arr[i] = GT.get_P_conv(r0_div_R, z_div_L_arr[i], cond_GT, gp_arr[i], gm_arr[i])
 
     report_step[5] = length_average_f(z_div_L_arr, report_P_div_DLP_arr - cond_GT['Pper_div_DLP'], L_div_L, dz_div_L)*cond_GT['DLP']/cond_GT['DTP_HP']
-    print('iter=%d, chi_A=%4.3e'%(report_step[0], chi_A))
+    print('iter=%d, chi_A=%4.3e (weight = %4.3e)'%(report_step[0], chi_A, cond_GT['weight']))
     print('\tz_max=%4.3f, phiw(z_max)=%.4f, phiw(L)=%.4f\n\t<Pi>/DTP_HP=%4.3e, DTP/DTP_HP=%4.3e'%(report_step[1], report_step[2], report_step[3], report_step[4], report_step[5]))
     print('\tP(0)/Pin_ast=%4.3f, u(0,0)/u_ast=%4.3f\n'%(report_P_div_DLP_arr[0], (report_P_div_DLP_arr[0] - report_P_div_DLP_arr[1])/(z_div_L_arr[1] - z_div_L_arr[0])))
     print()
@@ -145,8 +145,7 @@ def print_iteration_info(n, z_div_L_arr, phiw_set_1, phiw_set_2, cond_GT, Pi_div
     return chi_A
 
 
-
-def gen_analysis(z_arr, y_div_R_arr, phiw_arr, cond_GT, fcn_Pi_given, fcn_Dc_given, fcn_eta_given, fn_out): 
+def aux_gen_analysis(z_arr, y_div_R_arr, phiw_arr, cond_GT, fcn_Pi_given, fcn_Dc_given, fcn_eta_given):
     """ Return 0
     
     Save analysis data into file with name of fn_out    
@@ -257,11 +256,133 @@ def gen_analysis(z_arr, y_div_R_arr, phiw_arr, cond_GT, fcn_Pi_given, fcn_Dc_giv
             Phi_b_z += 0.5 * dy * (j_b_1*J_r1 + j_b_2*J_r2)
             
             re[i, 9] = Phi_z * 2. * pi * cond_GT['u_ast']*cond_GT['R']**2.0
-            re[i, 10] = Phi_z
+            re[i, 10] = Phi_z #/ (pi*cond_GT['R']**2.0 * cond_GT['u_ast'] * cond_GT['phi_bulk'])
             re[i, 11] = Phi_ex_z
             re[i, 12] = Phi_b_z
             
 
+    # savetxt(fn_out, re) # write the result into the filename described in fn_out
+    return re
+
+
+def gen_analysis(z_arr, y_div_R_arr, phiw_arr, cond_GT, fcn_Pi_given, fcn_Dc_given, fcn_eta_given, fn_out):
+    re = aux_gen_analysis(z_arr, y_div_R_arr, phiw_arr, cond_GT, fcn_Pi_given, fcn_Dc_given, fcn_eta_given)
     savetxt(fn_out, re) # write the result into the filename described in fn_out
     return 0
+    
+    # """ Return 0
+    
+    # Save analysis data into file with name of fn_out    
+    # Data first stored in array "re":
+    #     re[0] = z                in the unit of m
+    #     re[1] = phi_w(z)         in the dimensionless unit
+    #     re[2] = P(z)             in the unit of Pa
+    #     re[3] = v_w(z)           in the unit of m/sec
+    #     re[4] = u(r=0, z)        in the unit of m/sec
+    #     re[5] = Pi(phi_w(z))     in the unit of Pa
+    #     re[6] = P(z) - P_perm    in the unit of Pa
+    #     re[7] = v_w(z)/v^\ast    in the dimensionless unit
+    #     re[8] = u(r=0, z)/u^\ast in the dimensionless unit
+    #     re[9] = Phi(z)           in the unit of m^3/sec
+    #     re[10] = 0               (empty at this moment)
+    
+    # Parameters:
+    #     z_arr              = arrays for discretized z (m)
+    #     y_div_R_arr        = arrays for discretized y (dimensionless).
+    #                          works as auxiliary function to calculate some functions <- check
+    #     phiw_arr(z)        = arrays for particle volume fraction at the wall
+    #     cond_GT            = conditions for general transport properties
+    #     fcn_Pi(phi)        = given function for the osmotic pressure
+    #     fcn_Dc_given(phi)  = given function for gradient diffusion coefficient
+    #     fcn_eta_given(phi) = given function for suspension viscosity
+    #     fn_out             = filename for data output
+
+    # """
+
+    # Nz = size(z_arr); Ny = size(y_div_R_arr)
+    # dz = z_arr[1] - z_arr[0]
+    # dz_div_L = dz/cond_GT['L']
+    # z_div_L_arr = z_arr/cond_GT['L']
+    
+    # sign_plus = +1.
+    # sign_minus = -1.
+
+    # re = zeros([Nz, 15])
+
+    # re[:, 0] = z_arr
+    # re[:, 1] = phiw_arr
+
+    # Pi_arr = fcn_Pi_given(phiw_arr, cond_GT)                              
+    # Pi_div_DLP_arr = deepcopy(Pi_arr)/cond_GT['DLP']
+    # gp_arr = zeros(Nz)                                                 # constructing array for g+(z) function
+    # gm_arr = zeros(Nz)                                                 # constructing array for g-(z) function
+    # CT.gen_gpm_arr(sign_plus,  z_div_L_arr, Pi_div_DLP_arr, cond_GT['k'], gp_arr)
+    # CT.gen_gpm_arr(sign_minus, z_div_L_arr, Pi_div_DLP_arr, cond_GT['k'], gm_arr)
+    # cond_GT['Gk'] = CT.get_Gk_boost(cond_GT['k'], dz_div_L, gp_arr[-1], gm_arr[-1], cond_GT['denom_Gk_BC_specific'])
+
+    # cond_GT['Bp'] = CT.get_Bpm_conv(sign_plus, cond_GT)
+    # cond_GT['Bm'] = CT.get_Bpm_conv(sign_minus, cond_GT)
+
+
+    # ind_z0 = 0 #z-index at inlet
+    
+    # z0_div_L = 0. #z-coord at inlet
+    
+    # r0_div_R = 0. #r-coord at the centerline of pipe
+    # rw_div_R = 1. #r-coord at the membrane wall
+    # phi_b = cond_GT['phi_bulk']    
+    # for i in range(Nz):
+    #     # when iteration is done
+    #     phi_arr_zi = zeros(Ny)
+    #     Ieta_arr_zi = zeros(Ny)
+    #     ID_arr_zi = zeros(Ny)
+
+
+    #     zi_div_L = z_div_L_arr[i]
+    #     re[i, 2] = cond_GT['DLP']*GT.get_P_conv(r0_div_R, zi_div_L, cond_GT, gp_arr[i], gm_arr[i])
+    #     vw_div_vw0_zi = GT.get_v_conv(rw_div_R, zi_div_L, Pi_div_DLP_arr[i], cond_GT, gp_arr[i], gm_arr[i])
+    #     re[i, 3] = cond_GT['vw0']*vw_div_vw0_zi
+
+    #     GT.gen_phi_wrt_yt(z_div_L_arr[i], phiw_arr[i], fcn_Dc_given, vw_div_vw0_zi, y_div_R_arr, phi_arr_zi, cond_GT)
+    #     GT.gen_INT_inv_f_wrt_yt(y_div_R_arr, phi_arr_zi, Ieta_arr_zi, fcn_eta_given, cond_GT)
+    #     GT.gen_INT_inv_f_wrt_yt(y_div_R_arr, phi_arr_zi, ID_arr_zi, fcn_Dc_given, cond_GT)
+
+    #     re[i, 4] = cond_GT['u_ast']*GT.get_u_conv(r0_div_R, zi_div_L, cond_GT, gp_arr[i], gm_arr[i], Ieta_arr_zi[-1])
+    #     re[i, 5] = Pi_arr[i]
+    #     re[i, 6] = re[i, 2] - cond_GT['Pper']
+    #     re[i, 7] = re[i, 3]/cond_GT['vw0']
+    #     re[i, 8] = re[i, 4]/cond_GT['u_ast']
+
+    #     Phi_z = 0. # Using Eq. (50)
+    #     Phi_ex_z = 0. # Using Eq. (60)
+    #     Phi_b_z = 0. # Using Eq. (60)
+    #     u1 = 0; u2 = 0;
+    #     for j in range(1, Ny):
+    #         dy = y_div_R_arr[j] - y_div_R_arr[j-1]
+    #         u1 = u2
+    #         u2 = GT.get_u_conv(1. - y_div_R_arr[j], zi_div_L, cond_GT, gp_arr[i], gm_arr[i], Ieta_arr_zi[j])
+
+    #         j_ex_1 = (phi_arr_zi[j-1] - phi_b)*u1;
+    #         j_ex_2 = (phi_arr_zi[j] - phi_b)*u2;
+
+    #         j_b_1 = phi_b*u1;
+    #         j_b_2 = phi_b*u2;
+
+    #         j1 = j_ex_1 + j_b_1
+    #         j2 = j_ex_2 + j_b_2
+
+
+    #         J_r1 = J_int_yt(y_div_R_arr[j-1], cond_GT['membrane_geometry'])
+    #         J_r2 = J_int_yt(y_div_R_arr[j], cond_GT['membrane_geometry'])
+
+    #         Phi_z += 0.5 * dy * (j1*J_r1 + j2*J_r2)
+    #         Phi_ex_z += 0.5 * dy * (j_ex_1*J_r1 + j_ex_2*J_r2)
+    #         Phi_b_z += 0.5 * dy * (j_b_1*J_r1 + j_b_2*J_r2)
+            
+    #         re[i, 9] = Phi_z * 2. * pi * cond_GT['u_ast']*cond_GT['R']**2.0
+    #         re[i, 10] = Phi_z #/ (pi*cond_GT['R']**2.0 * cond_GT['u_ast'] * cond_GT['phi_bulk'])
+    #         re[i, 11] = Phi_ex_z
+    #         re[i, 12] = Phi_b_z
+            
+
 

@@ -139,7 +139,7 @@ if __name__ == '__main__' :
             print('BC_perm is set with DTP (or not-specified): this will use ref_DTP to determine Pperm. This has advantage when we want to compare BCP and BCu cases.')
             Pper = PS.get_Pper(DLP, ref_DTP, k, ref_Pout)                         # calculating Pper for the given DLP, DTP_linear, k, and P_out
 
-        pre_cond = {'k':k, 'R':R_channel, 'L':L_channel, 'Lp':Lp, 'eta0':eta0, 'membrane_geometry':membrane_geometry, 'lam1':lam1, 'lam2':lam2, 'define_permeability':define_permeability, 'h':h_membrane, 'kappa_Darcy':kappa_Darcy, 'BC_inlet':BC_inlet, 'DLP':DLP}
+        pre_cond = {'k':k, 'R':R_channel, 'L':L_channel, 'Lp':Lp, 'eta0':eta0, 'membrane_geometry':membrane_geometry, 'lam1':lam1, 'lam2':lam2, 'define_permeability':define_permeability, 'h':h_membrane, 'kappa_Darcy':kappa_Darcy, 'BC_inlet':BC_inlet, 'DLP':DLP, 'phi_freeze':phi_freeze, 'Nz':Nz}
         cond_PS = PS.get_cond(pre_cond, Pin_ast, ref_Pout, Pper, u_ast)                  # allocating Blank Test (pure test) conditions
 
         DTP_HP = (1/2.)*(Pin_ast + ref_Pout) - Pper                            # length-averaged TMP with a linearly declined pressure approximation
@@ -185,7 +185,16 @@ if __name__ == '__main__' :
 
         for n in range(N_iter):                                                           # main iterator with number n
             phiw_set_1 = deepcopy(phiw_set_2)                                             # reduced wall concentration inherited from the previous iteration
-
+            # if ((n+1)%10 == 0 and cond_GT['weight'] < 0.1):
+            #     tmp_weight = 2.*cond_GT['weight']
+            #     if (tmp_weight > 0.1):
+            #         tmp_weight = 0.1
+            #     print('the current weight = %4.3e will be updated to %4.3e\n'%(cond_GT['weight'], tmp_weight))
+            #     cond_GT['weight'] = tmp_weight    
+            #     # cond_GT['weight'] *= 2.
+            #     # if (cond_GT['weight']>0.1):
+            #     #     cond_GT['weight']==0.1
+                    
             CT.gen_gpm_arr(sign_plus,  z_div_L_arr, Pi_div_DLP_arr, k, gp_arr)
             CT.gen_gpm_arr(sign_minus, z_div_L_arr, Pi_div_DLP_arr, k, gm_arr)
             cond_GT['Gk'] = CT.get_Gk_boost(k, dz_div_L, gp_arr[-1], gm_arr[-1], cond_GT['denom_Gk_BC_specific'])
@@ -197,7 +206,7 @@ if __name__ == '__main__' :
             Pi_arr = fcn_Pi_given(phiw_set_2*phi_b, cond_GT)                              # calculating osmotic pressure for the given phiw
             Pi_div_DLP_arr = Pi_arr/cond_GT['DLP']
 
-            chi_A = print_iteration_info(n, z_div_L_arr, phiw_set_1, phiw_set_2, cond_GT, Pi_div_DLP_arr, gp_arr, gm_arr, f_log)
+            chi_A = print_iteration_info(n, z_div_L_arr, phiw_set_1, phiw_set_2, cond_GT, Pi_div_DLP_arr, gp_arr, gm_arr, f_log)            
             if n == N_iter-1 or chi_A < TOL_chi_A:
                 print('\n Iteration is ended with n=%d and chi_A=%4.3e (STOP criterion: n=%d OR chi_A=%4.3e)\n'%(n+1, chi_A, N_iter, TOL_chi_A))
                 gen_analysis(z_arr, y_div_R_arr, phiw_set_2*phi_b, cond_GT, fcn_Pi_given, fcn_Dc_given, fcn_eta_given, fn_out)

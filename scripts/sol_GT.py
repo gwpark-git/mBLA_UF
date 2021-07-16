@@ -403,6 +403,16 @@ def gen_new_phiw_div_phib_arr(N_PROCESSES, phiw_div_phib_arr_new, cond_GT, fcn_D
         pool.close()
         pool.join()
 
+    cnt_EXCEED = 0        
+    for i,x in enumerate(phiw_div_phib_arr_new):
+
+        x = x*cond_GT['phi_bulk']
+        if x > cond_GT['phi_freeze']:
+            cnt_EXCEED += 1
+            phiw_div_phib_arr_new[i] = cond_GT['phi_freeze']/cond_GT['phi_bulk'] # this prevent the accidently beyond the freezing concentration
+    if(cnt_EXCEED>0):
+        print('Warning: exceed phi_freeze %d times out of %d\n'%(cnt_EXCEED, cond_GT['Nz']))
+
     FPI_operator(cond_GT['weight'], phiw_div_phib_arr, phiw_div_phib_arr_new, N_skip=1) # phiw(0) must be phib.
 
     return 0
