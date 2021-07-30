@@ -223,7 +223,7 @@ def aux_gen_analysis(z_arr, y_div_R_arr, phiw_arr, cond_GT, fcn_Pi_given, fcn_Dc
         GT.gen_INT_inv_f_wrt_yt(y_div_R_arr, phi_arr_zi, Ieta_arr_zi, fcn_eta_given, cond_GT)
         GT.gen_INT_inv_f_wrt_yt(y_div_R_arr, phi_arr_zi, ID_arr_zi, fcn_Dc_given, cond_GT)
 
-        re[i, 4] = cond_GT['u_ast']*GT.get_u_conv(r0_div_R, zi_div_L, cond_GT, gp_arr[i], gm_arr[i], Ieta_arr_zi[-1])
+        re[i, 4] = cond_GT['u_ast']*GT.get_u_conv(r0_div_R, zi_div_L, cond_GT, gp_arr[i], gm_arr[i], Ieta_arr_zi[-1], Ieta_arr_zi[-1])
         re[i, 5] = Pi_arr[i]
         re[i, 6] = re[i, 2] - cond_GT['Pper']
         re[i, 7] = re[i, 3]/cond_GT['vw0']
@@ -236,7 +236,7 @@ def aux_gen_analysis(z_arr, y_div_R_arr, phiw_arr, cond_GT, fcn_Pi_given, fcn_Dc
         for j in range(1, Ny):
             dy = y_div_R_arr[j] - y_div_R_arr[j-1]
             u1 = u2
-            u2 = GT.get_u_conv(1. - y_div_R_arr[j], zi_div_L, cond_GT, gp_arr[i], gm_arr[i], Ieta_arr_zi[j])
+            u2 = GT.get_u_conv(1. - y_div_R_arr[j], zi_div_L, cond_GT, gp_arr[i], gm_arr[i], Ieta_arr_zi[j], Ieta_arr_zi[-1])
 
             j_ex_1 = (phi_arr_zi[j-1] - phi_b)*u1;
             j_ex_2 = (phi_arr_zi[j] - phi_b)*u2;
@@ -254,8 +254,15 @@ def aux_gen_analysis(z_arr, y_div_R_arr, phiw_arr, cond_GT, fcn_Pi_given, fcn_Dc
             Phi_z += 0.5 * dy * (j1*J_r1 + j2*J_r2)
             Phi_ex_z += 0.5 * dy * (j_ex_1*J_r1 + j_ex_2*J_r2)
             Phi_b_z += 0.5 * dy * (j_b_1*J_r1 + j_b_2*J_r2)
-            
-            re[i, 9] = Phi_z * 2. * pi * cond_GT['u_ast']*cond_GT['R']**2.0
+
+        re[i, 9] = Phi_z * 2. * pi * cond_GT['u_ast']*cond_GT['R']**2.0            
+        if (cond_GT['membrane_geometry']=='FMS'):
+            add_re = (2/3.)*phi_b*GT.get_u_conv(0., zi_div_L, cond_GT, gp_arr[i], gm_arr[i], Ieta_arr_zi[-1], Ieta_arr_zi[-1])
+            re[i, 10] = (Phi_z + add_re)/2.0#/ (pi*cond_GT['R']**2.0 * cond_GT['u_ast'] * cond_GT['phi_bulk'])
+            re[i, 11] = Phi_ex_z/2.0
+            re[i, 12] = (Phi_b_z + add_re)/2.0
+
+        else:
             re[i, 10] = Phi_z #/ (pi*cond_GT['R']**2.0 * cond_GT['u_ast'] * cond_GT['phi_bulk'])
             re[i, 11] = Phi_ex_z
             re[i, 12] = Phi_b_z

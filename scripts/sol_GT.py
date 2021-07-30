@@ -49,8 +49,8 @@ def get_cond(cond_CT, Nr, weight):
 def get_P_conv(r_div_R, z_div_L, cond_GT, gp, gm):
     return get_P(r_div_R, z_div_L, cond_GT['Pper_div_DLP'], cond_GT['k'], cond_GT['Bp'], cond_GT['Bm'], gp, gm)
 
-def get_u_conv(r_div_R, z_div_L, cond_GT, gp, gm, int_Y):
-    return get_u(r_div_R, z_div_L, cond_GT['k'], cond_GT['Bp'], cond_GT['Bm'], gp, gm, cond_GT['lam1'], int_Y)
+def get_u_conv(r_div_R, z_div_L, cond_GT, gp, gm, int_Y, int_Y0):
+    return get_u(r_div_R, z_div_L, cond_GT['k'], cond_GT['Bp'], cond_GT['Bm'], gp, gm, cond_GT['lam1'], int_Y, int_Y0)
 
 def get_v_conv(r_div_R, z_div_L, Pi_div_DLP, cond_GT, gp, gm):
     return get_v(r_div_R, z_div_L, Pi_div_DLP, cond_GT['k'], cond_GT['alpha_ast'], cond_GT['Bp'], cond_GT['Bm'], gp, gm, cond_GT['membrane_geometry'])
@@ -72,14 +72,16 @@ def get_uZ_out(z_div_L, k, Bp, Bm, gp, gm):
                  - exp(-k*z_div_L)*(Bm + gp))
     return uZ_out
 
-def get_u(r_div_R, z_div_L, k, Bp, Bm, gp, gm, lam1, int_Y):
+def get_u(r_div_R, z_div_L, k, Bp, Bm, gp, gm, lam1, int_Y, int_Y0):
     """ Using expressions u in Eq. (45) 
     and integrate 1/eta from r to 1 is reversed from 0 to y (sign change is already applied)
     u_Z^out is given in following Eq. (45)
     """
     
     # uR = (lam1/2.)*(1. + r_div_R)*int_Y
+    # uR = (1. + r_div_R)*int_Y
     uR = (1. + r_div_R)*int_Y
+    
     uZ_out = -k*(exp(k*z_div_L)*(Bp + gm) \
                  - exp(-k*z_div_L)*(Bm + gp))
 
