@@ -49,8 +49,8 @@ def get_cond(cond_CT, Nr, weight):
 def get_P_conv(r_div_R, z_div_L, cond_GT, gp, gm):
     return get_P(r_div_R, z_div_L, cond_GT['Pper_div_DLP'], cond_GT['k'], cond_GT['Bp'], cond_GT['Bm'], gp, gm)
 
-def get_u_conv(r_div_R, z_div_L, cond_GT, gp, gm, int_Y, int_Y0):
-    return get_u(r_div_R, z_div_L, cond_GT['k'], cond_GT['Bp'], cond_GT['Bm'], gp, gm, cond_GT['lam1'], int_Y, int_Y0)
+def get_u_conv(r_div_R, z_div_L, cond_GT, gp, gm, int_Y):
+    return get_u(r_div_R, z_div_L, cond_GT['k'], cond_GT['Bp'], cond_GT['Bm'], gp, gm, cond_GT['lam1'], int_Y)
 
 def get_v_conv(r_div_R, z_div_L, Pi_div_DLP, cond_GT, gp, gm):
     return get_v(r_div_R, z_div_L, Pi_div_DLP, cond_GT['k'], cond_GT['alpha_ast'], cond_GT['Bp'], cond_GT['Bm'], gp, gm, cond_GT['membrane_geometry'])
@@ -72,7 +72,7 @@ def get_uZ_out(z_div_L, k, Bp, Bm, gp, gm):
                  - exp(-k*z_div_L)*(Bm + gp))
     return uZ_out
 
-def get_u(r_div_R, z_div_L, k, Bp, Bm, gp, gm, lam1, int_Y, int_Y0):
+def get_u(r_div_R, z_div_L, k, Bp, Bm, gp, gm, lam1, int_Y):
     """ Using expressions u in Eq. (45) 
     and integrate 1/eta from r to 1 is reversed from 0 to y (sign change is already applied)
     u_Z^out is given in following Eq. (45)
@@ -363,6 +363,7 @@ def process_at_zi(z_div_L, phiw, Pi_div_DLP, cond_GT, gp, gm, yt_arr, phi_arr, I
     vw_div_vw0_zi = get_v_conv(rw_div_R, z_div_L, Pi_div_DLP, cond_GT, gp, gm)
     gen_phi_wrt_yt(z_div_L, phiw, fcn_D, vw_div_vw0_zi, yt_arr, phi_arr, cond_GT)
     gen_INT_inv_f_wrt_yt(yt_arr, phi_arr, Ieta_arr, fcn_eta, cond_GT)
+    Ieta_arr /= Ieta_arr[-1]
     gen_INT_inv_f_wrt_yt(yt_arr, phi_arr, ID_arr, fcn_D, cond_GT)
     uZ_zi = get_uZ_out(z_div_L, cond_GT['k'], cond_GT['Bp'], cond_GT['Bm'], gp, gm)
 
@@ -393,6 +394,7 @@ def gen_new_phiw_div_phib_arr(N_PROCESSES, phiw_div_phib_arr_new, cond_GT, fcn_D
     vw_div_vw0_z0 = get_v_conv(rw_div_R, z0_div_L, Pi_div_DLP_arr[ind_z0], cond_GT, gp_arr[ind_z0], gm_arr[ind_z0])
     gen_phi_wrt_yt(z0_div_L, phiw_div_phib_arr[ind_z0]*phi_b, fcn_D, vw_div_vw0_z0, yt_arr, phi_arr_z0, cond_GT)
     gen_INT_inv_f_wrt_yt(yt_arr, phi_arr_z0, Ieta_arr_z0, fcn_eta, cond_GT)
+    Ieta_arr_z0 /= Ieta_arr_z0[-1] # CHECK
     gen_INT_inv_f_wrt_yt(yt_arr, phi_arr_z0, ID_arr_z0, fcn_D, cond_GT)
 
     uZ_z0 = get_uZ_out(z0_div_L, cond_GT['k'], cond_GT['Bp'], cond_GT['Bm'], gp_arr[ind_z0], gm_arr[ind_z0])
