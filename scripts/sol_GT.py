@@ -100,6 +100,8 @@ def gen_y_div_R_arr(cond_GT):
     """ Generating discretized dimensionless y-coordinate with adaptive step size
     The selected way for the adaptive step size is only for the temporary
     There are revised version, which will be applied for the near future.
+
+    Note: the dictionary cond_GT required only one key: 'Nr'.
     """
 
     Ny = int(cond_GT['Nr'])
@@ -192,6 +194,11 @@ def gen_phi_wrt_yt(z_div_L, phiw, fcn_D, vw_div_vw0, y_div_R_arr, phi_arr, cond_
 
     Instead, we define our own y_div_R evolution based on Runge-Kutta 4th order method.
     This is supported by cal_f_RK function defined above.
+
+    Note: the cond_GT required the two keys: 'phi_bulk' and 'epsilon_d'. 
+    However, if the transport properties requiredc, 'gamma' should be required as input for the suspension properties.
+
+    Note: z_div_L is not required here. It will be eventually removed.
     """
     phi_b = cond_GT['phi_bulk']
     ed = cond_GT['epsilon_d']
@@ -325,7 +332,9 @@ def cal_int_Fz(given_re_F2_0, vw_div_vw0, ed, yt_arr, Ieta_arr, ID_arr, uZ_zi, m
         
     re_F1_Z *= uZ_zi
     re_F2_Z *= uZ_zi
-    return 1. + (given_re_F2_0 - re_F2_Z)/re_F1_Z
+    re_add = get_add_term_cal_Fz(uZ_zi, membrane_geometry)
+    
+    return 1. + (given_re_F2_0 - re_F2_Z + re_add)/re_F1_Z
 
 def FPI_operator(weight, val_pre, val_new, N_skip=0):
     """ val_new = (1. - weight)*val_pre + weight*val_new
@@ -416,6 +425,81 @@ def gen_new_phiw_div_phib_arr(N_PROCESSES, phiw_div_phib_arr_new, cond_GT, fcn_D
     FPI_operator(cond_GT['weight'], phiw_div_phib_arr, phiw_div_phib_arr_new, N_skip=1) # phiw(0) must be phib.
 
     return 0
+
+
+    
+
+
+# def gen_new_phiw_div_phib_arr_FMS(N_PROCESSES, phiw_div_phib_arr_new, cond_GT, fcn_D, fcn_eta, z_div_L_arr, phiw_div_phib_arr, Pi_div_DLP_arr, weight, gp_arr, gm_arr, yt_arr, phi_yt_arr, ID_yt_arr, Ieta_yt_arr):
+#     """ Calculation phi_w/phi_b at the given z using Eq. (D3)
+#     The detailed terms in Eq. (D3) is explained in the function cal_int_Fz which calculate the integration.
+#     """
+#     phi_b = cond_GT['phi_bulk']
+#     ed = cond_GT['epsilon_d']
+#     membrane_geometry = cond_GT['membrane_geometry']
+    
+#     Ny = size(yt_arr)
+#     # # Python allocate the name for phi_yt_arr[0], this is the same as reference value for C++ " y= &x"
+#     phi_arr_z0 = phi_yt_arr[0]
+#     Ieta_arr_z0= Ieta_yt_arr[0]
+#     ID_arr_z0 = ID_yt_arr[0]
+
+#     ind_z0 = 0 #z-index at inlet
+    
+#     z0_div_L = 0. #z-coord at inlet
+    
+#     r0_div_R = 0. #r-coord at the centerline of pipe
+#     rw_div_R = 1. #r-coord at the membrane wall
+    
+#     vw_div_vw0_z0 = get_v_conv(rw_div_R, z0_div_L, Pi_div_DLP_arr[ind_z0], cond_GT, gp_arr[ind_z0], gm_arr[ind_z0])
+#     gen_phi_wrt_yt(z0_div_L, phiw_div_phib_arr[ind_z0]*phi_b, fcn_D, vw_div_vw0_z0, yt_arr, phi_arr_z0, cond_GT)
+#     gen_INT_inv_f_wrt_yt(yt_arr, phi_arr_z0, Ieta_arr_z0, fcn_eta, cond_GT)
+#     gen_INT_inv_f_wrt_yt(yt_arr, phi_arr_z0, ID_arr_z0, fcn_D, cond_GT)
+
+#     uZ_z0 = get_uZ_out(z0_div_L, cond_GT['k'], cond_GT['Bp'], cond_GT['Bm'], gp_arr[ind_z0], gm_arr[ind_z0])
+#     F2_0 = cal_F2_Z(vw_div_vw0_z0, ed, yt_arr, Ieta_arr_z0, ID_arr_z0, uZ_z0, membrane_geometry)
+
+
+#     # here is pre-calculation for bottom side
+#     phi_arr_z0_BOT = ones(size(phi_arr_z0))
+#     Ieta_arr_z0_BOT = ones(size(phi_arr_z0))
+#     ID_arr_z0_BOT = ones(size(phi_arr_z0))
+
+#     vw_div_vw0_z0_BOT = get_v_conv(rw_div_R, z0_div_L, 0., cond_GT, gp_arr[ind_z0], gm_arr[ind_z0])
+#     gen_phi_wrt_yt(z0_div_L, phi_b, fcn_D, vw_div_vw0_z0_BOT, yt_arr, phi_arr_z0_BOT, cond_GT)
+#     # do not require to calculate Ieta and ID
+    
+
+    
+#     Nz = size(z_div_L_arr)
+#     if (N_PROCESSES ==1):
+#         # when only single-processor is allocated
+#         for i in range(1, Nz):
+#             phiw_div_phib_arr_new[1:] = process_at_zi(z_div_L_arr[i], phiw_div_phib_arr[i]*phi_b, Pi_div_DLP_arr[i], cond_GT, gp_arr[i], gm_arr[i], yt_arr, phi_yt_arr[i], Ieta_yt_arr[i], fcn_eta, ID_yt_arr[i], fcn_D, F2_0)
+#     else:
+#         # this uses multiprocessing packages
+#         import multiprocessing as mp
+        
+#         pool = mp.Pool(N_PROCESSES)
+#         args_list = [(z_div_L_arr[i], phiw_div_phib_arr[i]*phi_b, Pi_div_DLP_arr[i], cond_GT, gp_arr[i], gm_arr[i], yt_arr, phi_yt_arr[i], Ieta_yt_arr[i], fcn_eta, ID_yt_arr[i], fcn_D, F2_0)\
+#                      for i in range(1, Nz)]
+#         phiw_div_phib_arr_new[1:] = pool.starmap(process_at_zi, args_list)
+#         pool.close()
+#         pool.join()
+
+#     cnt_EXCEED = 0        
+#     for i,x in enumerate(phiw_div_phib_arr_new):
+
+#         x = x*cond_GT['phi_bulk']
+#         if x > cond_GT['phi_freeze']:
+#             cnt_EXCEED += 1
+#             phiw_div_phib_arr_new[i] = cond_GT['phi_freeze']/cond_GT['phi_bulk'] # this prevent the accidently beyond the freezing concentration
+#     if(cnt_EXCEED>0):
+#         print('Warning: exceed phi_freeze %d times out of %d\n'%(cnt_EXCEED, cond_GT['Nz']))
+
+#     FPI_operator(cond_GT['weight'], phiw_div_phib_arr, phiw_div_phib_arr_new, N_skip=1) # phiw(0) must be phib.
+
+#     return 0
 
 
     

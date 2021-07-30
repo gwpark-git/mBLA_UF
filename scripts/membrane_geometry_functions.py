@@ -1,5 +1,10 @@
 from numpy import *
 
+def get_add_term_cal_Fz(uZ_nodim, membrane_geometry):
+    if membrane_geometry=='FMS':
+        return (2/3.)*(1. - uZ_nodim)
+    return 0.
+
 def get_DLP_from_uin(u_ast, lam1, eta_s, R_channel, L_channel):
     # this will calculate DLP_ast based on the linear approximation for P
     # i.e., a constant approximation for u.

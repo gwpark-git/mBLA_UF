@@ -2,6 +2,8 @@
 # import sys
 from analysis import *
 
+# def gen_radial_J(phiw_z, vw_z, 
+
 def gen_cond_GT(fn_inp, given_phiw):
     print(fn_inp)
     exec(open(fn_inp).read())
