@@ -404,7 +404,7 @@ def gen_new_phiw_div_phib_arr(N_PROCESSES, phiw_div_phib_arr_new, cond_GT, fcn_D
     if (N_PROCESSES ==1):
         # when only single-processor is allocated
         for i in range(1, Nz):
-            phiw_div_phib_arr_new[1:] = process_at_zi(z_div_L_arr[i], phiw_div_phib_arr[i]*phi_b, Pi_div_DLP_arr[i], cond_GT, gp_arr[i], gm_arr[i], yt_arr, phi_yt_arr[i], Ieta_yt_arr[i], fcn_eta, ID_yt_arr[i], fcn_D, F2_0)
+            phiw_div_phib_arr_new[i] = process_at_zi(z_div_L_arr[i], phiw_div_phib_arr[i]*phi_b, Pi_div_DLP_arr[i], cond_GT, gp_arr[i], gm_arr[i], yt_arr, phi_yt_arr[i], Ieta_yt_arr[i], fcn_eta, ID_yt_arr[i], fcn_D, F2_0)
     else:
         # this uses multiprocessing packages
         import multiprocessing as mp
