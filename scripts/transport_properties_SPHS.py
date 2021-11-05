@@ -18,6 +18,33 @@ def fcn_unity(phi, cond_GT):
     re = ones(size(phi))
     return re
 
+# Here, the Saito function take up to the third order
+def Saito_fcn_HS_S3(phi):
+    """ test update
+
+    """
+    return phi*(1. + 0.95*phi - 2.15*phi**2.0)
+    # return phi*(1. + 0.95*phi - 2.15*phi**2.0)*(lambda_V_SPHS(gamma)/(2.5*gamma**3) - gamma**3)
+    # return phi*(lambda_V_SPHS(gamma)/(2.5*gamma**3) - gamma**3)
+
+
+    
+def eta_inf_div_eta0_HS_S3(phi, gamma):
+    # new S3
+    # return 1 + 2.5*gamma**3*phi*(1 + Saito_fcn_HS_S3(phi, gamma))*(1 - gamma**3 * phi * (1 + Saito_fcn_HS_S3(phi, gamma)))
+    s = Saito_fcn_HS_S3(phi)
+    # s =  phi*(1. + 0.95*phi - 2.15*phi**2.0)
+    return 1 + (5./2.)*phi*(1.+s)/(1. - phi*(1.+s))
+
+def Gamma_S_HS_S3(phi, gamma):
+    return Ds_div_D0_SPHS(phi, gamma)*eta_inf_div_eta0_HS_S3(phi, gamma)
+
+def eta_div_eta0_HS_S3(phi, cond_GT):
+    gamma = cond_GT['gamma']
+    return eta_inf_div_eta0_HS_S3(phi, gamma)*(1 + (1/Gamma_S_HS_S3(phi, gamma))*Del_eta_noHI_div_eta0_SPHS(phi))
+
+
+# Below are the originally used functions
 def eta_div_eta0_SPHS(phi, cond_GT):
     gamma = cond_GT['gamma']
     return eta_inf_div_eta0_SPHS(phi, gamma)*(1 + (1/Gamma_S_SPHS(phi, gamma))*Del_eta_noHI_div_eta0_SPHS(phi))

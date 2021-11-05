@@ -96,7 +96,7 @@ if __name__ == '__main__' :
         D0 = kT/(6.*pi*eta0*a_H)                                           # Stokes-Einstein-Sutherland
         Va = (4./3.)*pi*a_particle**3.0                                    # volume measure is still using particle exclusion-size
 
-        if (define_permeability.lower()=='darcy'):
+        if (define_permeability.lower()=='kappa_darcy'):
             # this will check whether permeability is given by kappa_Darcy or Lp
             # this also means h_membrane is given
             Lp = get_Lp_from_kappa_Darcy(membrane_geometry, kappa_Darcy, h_membrane, R_channel, eta0)

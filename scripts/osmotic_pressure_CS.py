@@ -21,6 +21,10 @@ def fcn_zero(phi, cond_GT):
 def Pi_CS(phi, cond_GT):
     return get_Pi(phi, cond_GT['Va'], cond_GT['kT'])
 
+def Pi_VH(phi, cond_GT):
+    rho = phi/cond_GT['Va']
+    kBT = cond_GT['kT']
+    return rho * kBT * 1.0
 
 def CS_Z(phi):
     return (1 + phi + phi**2. - phi**3.)/(1.-phi)**3.0
