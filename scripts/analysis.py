@@ -5,6 +5,14 @@
 #   Modeling cross-flow ultrafiltration of permeable particles dispersions  #
 #   Paper authors: Park, Gun Woo and Naegele, Gerhard                       #
 #   doi: 10.1063/5.0020986                                                  #
+#                                                                           #
+#   Used in the paper (to be submitted):                                    #
+#   (tentative title) Geometrical influence on particle transport in        #
+#   cross-flow ultrafiltration: cylindrical and flat sheet membranes        #
+#   Paper authors: Park, Gun Woo and Naegele, Gerhard                       #
+#   doi: TBD                                                                #
+#                                                                           #
+#                                                                           #
 #   Code Developer: Park, Gun Woo    (g.park@fz-juelich.de)                 #
 #   MIT Open License (see LICENSE file in the main directory)               #
 #                                                                           #
@@ -15,6 +23,9 @@
 #   2. FMS: channel flow between flat membrane (top) / substrate (bottom)   #
 #   For this reason, the hollow fiber expression will be renamed as HF      #
 #                                                                           #
+#   Important note:                                                         #
+#   The new updte is based on the coordination y (in the new manuscript)    #
+#   This is exactly the same treatment with r in the code                   #
 #############################################################################
 
 
@@ -47,8 +58,12 @@ def print_preface(fn_inp, fn_out, fn_out_log, f_log):
     print ('# Semi-analytic solution of mBLA UF using CP layer model     #')        
     print ('# git-repository: https://github.com/gwpark-git/mBLA_UF.git  #')
     print ('# Developer: Gunwoo Park (IBI-4, Forschungszentrum Juelich)  #')
-    print ('# Reference: Park and Naegele, JCP (accepted, 2020)          #')
+    print ('# Reference 1: Park and Naegele, JCP (2020)                  #')
+    print ('# Reference 2: Park and Naegele, TBD (2021)                  #')    
     print ('##############################################################')
+    print ('')
+    print ('WARNING: some analysis part, e.g., cross-sectional averaged particle flux,')
+    print ('is not up to dated, so the unit must be careful for non-CM geometries.')
     print ('')
     print ('Executed time (date): %s'%(now_str))
     print ('with Arguments: ', fn_inp, fn_out)
@@ -58,8 +73,11 @@ def print_preface(fn_inp, fn_out, fn_out_log, f_log):
     f_log.write('# Semi-analytic solution of mBLA UF using CP layer model     #\n')        
     f_log.write('# git-repository: https://github.com/gwpark-git/mBLA_UF.git  #\n')
     f_log.write('# Developer: Gunwoo Park (IBI-4, Forschungszentrum Juelich)  #\n')
-    f_log.write('# Reference: Park and Naegele, JCP (accepted, 2020)          #\n')
+    f_log.write('# Reference 1: Park and Naegele, JCP (2020)                  #')
+    f_log.write('# Reference 2: Park and Naegele, TBD (2021)                  #')    
     f_log.write('##############################################################\n\n')
+    f_log.write('WARNING: some analysis part e.g., cross-sectional averaged particle flux')
+    f_log.write('is not up to dated, so the unit must be careful for non-CM geometries.')
     f_log.write('Executed time (date): %s\n'%(now_str))
     f_log.write('with Arguments: %s, %s\n'%(fn_inp, fn_out))
     f_log.write('     Log will be stored in %s\n\n'%(fn_out_log))
