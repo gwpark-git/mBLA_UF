@@ -2,15 +2,11 @@
 #   Auxililary functions for mBLA_UF code                                   #
 #                                                                           #
 #   Used in the paper:                                                      #
-#   Modeling cross-flow ultrafiltration of permeable particles dispersions  #
-#   Paper authors: Park, Gun Woo and Naegele, Gerhard                       #
+#   [1] Park and N{\"a}gele, JCP, 2020                                      #
 #   doi: 10.1063/5.0020986                                                  #
 #                                                                           #
-#   Used in the paper (to be submitted):                                    #
-#   (tentative title) Geometrical influence on particle transport in        #
-#   cross-flow ultrafiltration: cylindrical and flat sheet membranes        #
-#   Paper authors: Park, Gun Woo and Naegele, Gerhard                       #
-#   doi: TBD                                                                #
+#   [2] Park and N{\"a}gele, Membranes, 2021                                #
+#   doi: https://doi.org/10.3390/membranes11120960                          #
 #                                                                           #
 #                                                                           #
 #   Code Developer: Park, Gun Woo    (g.park@fz-juelich.de)                 #
@@ -34,6 +30,9 @@ from numpy import *
 # def fcn_given_conv(x_arr, y_arr, cond_GT):
 
 def length_average_f(x_arr, f_arr, Lx, dx=0):
+    """ Take length average of f(x) with respect to x (from x[0] to x[-1]).
+    Numerical integration is performed using trapezoidal rule.
+    """
     Nx = size(f_arr)
 
     if dx>0:

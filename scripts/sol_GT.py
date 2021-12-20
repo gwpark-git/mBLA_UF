@@ -4,15 +4,11 @@
 #   One must give the experssion for D and eta on top of the Pi             #
 #                                                                           #
 #   Used in the paper:                                                      #
-#   Modeling cross-flow ultrafiltration of permeable particles dispersions  #
-#   Paper authors: Park, Gun Woo and Naegele, Gerhard                       #
+#   [1] Park and N{\"a}gele, JCP, 2020                                      #
 #   doi: 10.1063/5.0020986                                                  #
 #                                                                           #
-#   Used in the paper (to be submitted):                                    #
-#   (tentative title) Geometrical influence on particle transport in        #
-#   cross-flow ultrafiltration: cylindrical and flat sheet membranes        #
-#   Paper authors: Park, Gun Woo and Naegele, Gerhard                       #
-#   doi: TBD                                                                #
+#   [2] Park and N{\"a}gele, Membranes, 2021                                #
+#   doi: https://doi.org/10.3390/membranes11120960                          #
 #                                                                           #
 #                                                                           #
 #   Code Developer: Park, Gun Woo    (g.park@fz-juelich.de)                 #
@@ -69,14 +65,14 @@ def get_v_conv(r_div_R, z_div_L, Pi_div_DLP, cond_GT, gp, gm):
 # flow profiles 
 
 def get_P(r_div_R, z_div_L, Pper_div_DLP, k, Bp, Bm, gp, gm):
-    """ Using expression in P=P^out in Eqs. (45) and (49)
+    """ Using expression in P=P^out in Eqs. (45) and (49) in [1]
     There is no difference from CT.get_P
     """
     return CT.get_P(r_div_R, z_div_L, Pper_div_DLP, k, Bp, Bm, gp, gm)
 
 
 def get_uZ_out(z_div_L, k, Bp, Bm, gp, gm):
-    """ Using expression below Eq. (45):
+    """ Using expression below Eq. (45) in [1]:
     uZ_out(z) = -dP_out(z)/dz
     """
     uZ_out = -k*(exp(k*z_div_L)*(Bp + gm) \
@@ -84,9 +80,9 @@ def get_uZ_out(z_div_L, k, Bp, Bm, gp, gm):
     return uZ_out
 
 def get_u(r_div_R, z_div_L, k, Bp, Bm, gp, gm, lam1, int_Y):
-    """ Using expressions u in Eq. (45) 
+    """ Using expressions u in Eq. (45) in [1]
     and integrate 1/eta from r to 1 is reversed from 0 to y (sign change is already applied)
-    u_Z^out is given in following Eq. (45)
+    u_Z^out is given in following Eq. (45) in [1]
     """
     
     # uR = (lam1/2.)*(1. + r_div_R)*int_Y
@@ -100,7 +96,7 @@ def get_u(r_div_R, z_div_L, k, Bp, Bm, gp, gm, lam1, int_Y):
 
 
 def get_v(r_div_R, z_div_L, Pi_div_DLP, k, alpha_ast, Bp, Bm, gp, gm, membrane_geometry):
-    """ Using expression v=v^out in Eqs. (45) and (49)
+    """ Using expression v=v^out in Eqs. (45) and (49) in [1]
     As described in CT.get_v, sign is positive because we are using coordinate function r here
     """
     return CT.get_v(r_div_R, z_div_L, Pi_div_DLP, k, alpha_ast, Bp, Bm, gp, gm, membrane_geometry)
@@ -200,7 +196,7 @@ def cal_f_RK(yt, dyt, f, df, int_INV_D_pre, vw_div_vw0, fcn_D, cond_GT):
 
 
 def gen_phi_wrt_yt(z_div_L, phiw, fcn_D, vw_div_vw0, y_div_R_arr, phi_arr, cond_GT):
-    """ Generating phi with respect to y_div_R using expression of phi Eq. (49).
+    """ Generating phi with respect to y_div_R using expression of phi Eq. (49) in [1].
 
     Note that the matched asymptotic phi is the implicit equation, which make difficult
     to use Runge-Kutta function in scipy directly.
@@ -302,10 +298,10 @@ def cal_F1_Z(vw_div_vw0, ed, yt_arr, Ieta_arr, ID_arr, uZ_zi, membrane_geometry)
     return re_F1_Z * uZ_zi
 
 def cal_Phi_div_Phiast_conv(phiw, phi_bulk, F1_Z, F2_Z):
-    """ [Auxiliary function] Calculate Phi(z)/Phi_ast using definition of F1_Z and F2_Z in cal_int_Fz, and Eqs. (49), (50), (D1).
-    The original definition of Phi(z) in Eq. (50) is divided by Phi_ast=pi*R^2*phi_bulk*u_ast in accordance with caption of Fig. 11.
-    By definition of T_z[phi] in Eq. (D1), Phi(z)/Phi_ast = (2/phi_bulk)*T_z[phi].
-    By definition of matched asymptotic phi in Eq. (49), phi = (phiw - phi_bulk)*exp(-s_bar) + phi_bulk*(1 - s_bar*exp(-s_bar)).
+    """ [Auxiliary function] Calculate Phi(z)/Phi_ast using definition of F1_Z and F2_Z in cal_int_Fz, and Eqs. (49), (50), (D1) in [1].
+    The original definition of Phi(z) in Eq. (50) in [1] is divided by Phi_ast=pi*R^2*phi_bulk*u_ast in accordance with caption of Fig. 11 in [1].
+    By definition of T_z[phi] in Eq. (D1) in [1], Phi(z)/Phi_ast = (2/phi_bulk)*T_z[phi].
+    By definition of matched asymptotic phi in Eq. (49) in [1], phi = (phiw - phi_bulk)*exp(-s_bar) + phi_bulk*(1 - s_bar*exp(-s_bar)).
     Therefore, we have Phi(z)/Phi_ast = (2/phi_bulk)*((phiw - phi_bulk)*F1_Z + phi_bulk*F2_Z),
     where F1_Z and F2_Z are defined on cal_int_Fz function.
     """
@@ -315,7 +311,7 @@ def cal_Phi_div_Phiast_conv(phiw, phi_bulk, F1_Z, F2_Z):
 
 def cal_int_Fz(given_re_F2_0, vw_div_vw0, ed, yt_arr, Ieta_arr, ID_arr, uZ_zi, membrane_geometry):
     # ref: process_at_z_modi
-    """ Calculate Fz[phi_w] using Eq. (D3)
+    """ Calculate Fz[phi_w] using Eq. (D3) in [1]
     For readability, a new notation is used here:
         Fz[phi_w] := 1 + (F2_0 - F2_Z)/F1_Z
         where F2_Z is T_z[1-s_bar*e^{s_bar}], and F2_0 is F2_Z at z=0,
@@ -382,8 +378,8 @@ def process_at_zi(z_div_L, phiw, Pi_div_DLP, cond_GT, gp, gm, yt_arr, phi_arr, I
     return phiw_div_phib_new
 
 def gen_new_phiw_div_phib_arr(N_PROCESSES, phiw_div_phib_arr_new, cond_GT, fcn_D, fcn_eta, z_div_L_arr, phiw_div_phib_arr, Pi_div_DLP_arr, weight, gp_arr, gm_arr, yt_arr, phi_yt_arr, ID_yt_arr, Ieta_yt_arr):
-    """ Calculation phi_w/phi_b at the given z using Eq. (D3)
-    The detailed terms in Eq. (D3) is explained in the function cal_int_Fz which calculate the integration.
+    """ Calculation phi_w/phi_b at the given z using Eq. (D3) in [1]
+    The detailed terms in Eq. (D3) in [1] is explained in the function cal_int_Fz which calculate the integration.
     """
     phi_b = cond_GT['phi_bulk']
     ed = cond_GT['epsilon_d']
@@ -442,79 +438,3 @@ def gen_new_phiw_div_phib_arr(N_PROCESSES, phiw_div_phib_arr_new, cond_GT, fcn_D
     return 0
 
 
-    
-
-
-# def gen_new_phiw_div_phib_arr_FMS(N_PROCESSES, phiw_div_phib_arr_new, cond_GT, fcn_D, fcn_eta, z_div_L_arr, phiw_div_phib_arr, Pi_div_DLP_arr, weight, gp_arr, gm_arr, yt_arr, phi_yt_arr, ID_yt_arr, Ieta_yt_arr):
-#     """ Calculation phi_w/phi_b at the given z using Eq. (D3)
-#     The detailed terms in Eq. (D3) is explained in the function cal_int_Fz which calculate the integration.
-#     """
-#     phi_b = cond_GT['phi_bulk']
-#     ed = cond_GT['epsilon_d']
-#     membrane_geometry = cond_GT['membrane_geometry']
-    
-#     Ny = size(yt_arr)
-#     # # Python allocate the name for phi_yt_arr[0], this is the same as reference value for C++ " y= &x"
-#     phi_arr_z0 = phi_yt_arr[0]
-#     Ieta_arr_z0= Ieta_yt_arr[0]
-#     ID_arr_z0 = ID_yt_arr[0]
-
-#     ind_z0 = 0 #z-index at inlet
-    
-#     z0_div_L = 0. #z-coord at inlet
-    
-#     r0_div_R = 0. #r-coord at the centerline of pipe
-#     rw_div_R = 1. #r-coord at the membrane wall
-    
-#     vw_div_vw0_z0 = get_v_conv(rw_div_R, z0_div_L, Pi_div_DLP_arr[ind_z0], cond_GT, gp_arr[ind_z0], gm_arr[ind_z0])
-#     gen_phi_wrt_yt(z0_div_L, phiw_div_phib_arr[ind_z0]*phi_b, fcn_D, vw_div_vw0_z0, yt_arr, phi_arr_z0, cond_GT)
-#     gen_INT_inv_f_wrt_yt(yt_arr, phi_arr_z0, Ieta_arr_z0, fcn_eta, cond_GT)
-#     gen_INT_inv_f_wrt_yt(yt_arr, phi_arr_z0, ID_arr_z0, fcn_D, cond_GT)
-
-#     uZ_z0 = get_uZ_out(z0_div_L, cond_GT['k'], cond_GT['Bp'], cond_GT['Bm'], gp_arr[ind_z0], gm_arr[ind_z0])
-#     F2_0 = cal_F2_Z(vw_div_vw0_z0, ed, yt_arr, Ieta_arr_z0, ID_arr_z0, uZ_z0, membrane_geometry)
-
-
-#     # here is pre-calculation for bottom side
-#     phi_arr_z0_BOT = ones(size(phi_arr_z0))
-#     Ieta_arr_z0_BOT = ones(size(phi_arr_z0))
-#     ID_arr_z0_BOT = ones(size(phi_arr_z0))
-
-#     vw_div_vw0_z0_BOT = get_v_conv(rw_div_R, z0_div_L, 0., cond_GT, gp_arr[ind_z0], gm_arr[ind_z0])
-#     gen_phi_wrt_yt(z0_div_L, phi_b, fcn_D, vw_div_vw0_z0_BOT, yt_arr, phi_arr_z0_BOT, cond_GT)
-#     # do not require to calculate Ieta and ID
-    
-
-    
-#     Nz = size(z_div_L_arr)
-#     if (N_PROCESSES ==1):
-#         # when only single-processor is allocated
-#         for i in range(1, Nz):
-#             phiw_div_phib_arr_new[1:] = process_at_zi(z_div_L_arr[i], phiw_div_phib_arr[i]*phi_b, Pi_div_DLP_arr[i], cond_GT, gp_arr[i], gm_arr[i], yt_arr, phi_yt_arr[i], Ieta_yt_arr[i], fcn_eta, ID_yt_arr[i], fcn_D, F2_0)
-#     else:
-#         # this uses multiprocessing packages
-#         import multiprocessing as mp
-        
-#         pool = mp.Pool(N_PROCESSES)
-#         args_list = [(z_div_L_arr[i], phiw_div_phib_arr[i]*phi_b, Pi_div_DLP_arr[i], cond_GT, gp_arr[i], gm_arr[i], yt_arr, phi_yt_arr[i], Ieta_yt_arr[i], fcn_eta, ID_yt_arr[i], fcn_D, F2_0)\
-#                      for i in range(1, Nz)]
-#         phiw_div_phib_arr_new[1:] = pool.starmap(process_at_zi, args_list)
-#         pool.close()
-#         pool.join()
-
-#     cnt_EXCEED = 0        
-#     for i,x in enumerate(phiw_div_phib_arr_new):
-
-#         x = x*cond_GT['phi_bulk']
-#         if x > cond_GT['phi_freeze']:
-#             cnt_EXCEED += 1
-#             phiw_div_phib_arr_new[i] = cond_GT['phi_freeze']/cond_GT['phi_bulk'] # this prevent the accidently beyond the freezing concentration
-#     if(cnt_EXCEED>0):
-#         print('Warning: exceed phi_freeze %d times out of %d\n'%(cnt_EXCEED, cond_GT['Nz']))
-
-#     FPI_operator(cond_GT['weight'], phiw_div_phib_arr, phiw_div_phib_arr_new, N_skip=1) # phiw(0) must be phib.
-
-#     return 0
-
-
-    

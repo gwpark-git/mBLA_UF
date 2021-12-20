@@ -2,15 +2,11 @@
 #   Particle-contributed osmotic pressure using Carnahan-Starling equation  #
 #                                                                           #
 #   Used in the paper:                                                      #
-#   Modeling cross-flow ultrafiltration of permeable particles dispersions  #
-#   Paper authors: Park, Gun Woo and Naegele, Gerhard                       #
+#   [1] Park and N{\"a}gele, JCP, 2020                                      #
 #   doi: 10.1063/5.0020986                                                  #
 #                                                                           #
-#   Used in the paper (to be submitted):                                    #
-#   (tentative title) Geometrical influence on particle transport in        #
-#   cross-flow ultrafiltration: cylindrical and flat sheet membranes        #
-#   Paper authors: Park, Gun Woo and Naegele, Gerhard                       #
-#   doi: TBD                                                                #
+#   [2] Park and N{\"a}gele, Membranes, 2021                                #
+#   doi: https://doi.org/10.3390/membranes11120960                          #
 #                                                                           #
 #                                                                           #
 #   Code Developer: Park, Gun Woo    (g.park@fz-juelich.de)                 #
@@ -30,7 +26,6 @@
 
 from numpy import *
 
-# calculating osmotic pressure
 import scipy.constants as const
 
 def fcn_zero(phi, cond_GT):
@@ -38,14 +33,20 @@ def fcn_zero(phi, cond_GT):
     return re
 
 def Pi_CS(phi, cond_GT):
+    """ Osmotic pressure using Carnahan-Starling equation
+    """
     return get_Pi(phi, cond_GT['Va'], cond_GT['kT'])
 
 def Pi_VH(phi, cond_GT):
+    """ Osmotic pressure using Van-Hoff linear approximation
+    """
     rho = phi/cond_GT['Va']
     kBT = cond_GT['kT']
     return rho * kBT * 1.0
 
 def CS_Z(phi):
+    """ Reduced osmotic pressure (Pi/n(phi)k_B T) using Carnahan-Starling equation
+    """
     return (1 + phi + phi**2. - phi**3.)/(1.-phi)**3.0
 
 def get_Pi(phi, V_a, kBT):
@@ -54,4 +55,6 @@ def get_Pi(phi, V_a, kBT):
 
 def CS_S0(phi):
     # using CS_Z
+    """ Compressibility factor using Carnahan-Starling equation
+    """
     return (1. - phi)**4.0 / ((1. + 2.*phi)**2.0 + phi**3.0 *(phi - 4.))

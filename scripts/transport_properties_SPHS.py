@@ -4,17 +4,11 @@
 #   and simulation data from Abade et al. (2012)                            #
 #                                                                           #
 #   Used in the paper:                                                      #
-#   Modeling cross-flow ultrafiltration of permeable particles dispersions  #
-#   Paper authors: Park, Gun Woo and Naegele, Gerhard                       #
+#   [1] Park and N{\"a}gele, JCP, 2020                                      #
 #   doi: 10.1063/5.0020986                                                  #
-#   Note: this paper use the first-order Saito-type formula                 #
 #                                                                           #
-#   Used in the paper (to be submitted):                                    #
-#   (tentative title) Geometrical influence on particle transport in        #
-#   cross-flow ultrafiltration: cylindrical and flat sheet membranes        #
-#   Paper authors: Park, Gun Woo and Naegele, Gerhard                       #
-#   doi: TBD                                                                #
-#   Note: this paper use the third-order Saito-type formula (with _S3 mark) #
+#   [2] Park and N{\"a}gele, Membranes, 2021                                #
+#   doi: https://doi.org/10.3390/membranes11120960                          #
 #                                                                           #
 #                                                                           #
 #   Code Developer: Park, Gun Woo    (g.park@fz-juelich.de)                 #
@@ -35,34 +29,32 @@
 
 from numpy import *
 
-# two main functions
-
 def fcn_unity(phi, cond_GT):
     re = ones(size(phi))
     return re
 
-# Here, the Saito function take up to the third order
-def Saito_fcn_HS_S3(phi):
-    """ test update
-
-    """
-    return phi*(1. + 0.95*phi - 2.15*phi**2.0)
-    # return phi*(1. + 0.95*phi - 2.15*phi**2.0)*(lambda_V_SPHS(gamma)/(2.5*gamma**3) - gamma**3)
-    # return phi*(lambda_V_SPHS(gamma)/(2.5*gamma**3) - gamma**3)
-
-
     
 def eta_inf_div_eta0_HS_S3(phi, gamma):
-    # new S3
-    # return 1 + 2.5*gamma**3*phi*(1 + Saito_fcn_HS_S3(phi, gamma))*(1 - gamma**3 * phi * (1 + Saito_fcn_HS_S3(phi, gamma)))
+    """ High-frequency viscosity reduced by solvent (or dilution-limit) viscosity using the third order Saito function on phi.
+    The expression is already reported by Riest et al. Soft Matter (2015) although their actual use with solvent-permeable hard sphere is based on the linear fit with phi (see Saito_fcn_SPHS function).
+    """
     s = Saito_fcn_HS_S3(phi)
-    # s =  phi*(1. + 0.95*phi - 2.15*phi**2.0)
     return 1 + (5./2.)*phi*(1.+s)/(1. - phi*(1.+s))
 
 def Gamma_S_HS_S3(phi, gamma):
+    """ Generalized Stokes-Einstein function for self-diffusion coefficient of hard spheres
+    """
     return Ds_div_D0_SPHS(phi, gamma)*eta_inf_div_eta0_HS_S3(phi, gamma)
 
 def eta_div_eta0_HS_S3(phi, cond_GT):
+    """ High-frequency viscosity reduced by solvent (or dilution-limit) viscosity using the first order Saito function on phi.
+    The main reference is Riest et al. Soft Matter (2015).
+    It is based on the "first-order" polynomial fit for permeable hard spheres based on the simulation result reported by Abade et al. JCP (2012).
+    If we consider solvent-impermeable hard sphere case (i.e., gamma=1), the better polynomial fit is avaliable.
+    For such a normal hard sphere case, see Saito_fcn_HS_S3 function.
+    
+    Remark: In the case of a typical (solvent-impermeable) hard sphere dispersions, we would recommend the function "Saito_fcn_HS_S3".
+    """
     gamma = cond_GT['gamma']
     return eta_inf_div_eta0_HS_S3(phi, gamma)*(1 + (1/Gamma_S_HS_S3(phi, gamma))*Del_eta_noHI_div_eta0_SPHS(phi))
 
@@ -77,15 +69,28 @@ def eta_div_eta0_SPHS_2(phi, gamma):
 
 
 def Dc_short_div_D0_SPHS(phi, cond_GT):
+    """ Short-time collective diffusion coefficient of solvent-permeable hard spheres.
+
+    Arguments:
+        phi: volume fraction of particles
+        cond_GT: dictionary for basic condition. Here, the only necessary key is cond_GT['gamma']
+
+    Return:
+        Dc/D0: Reduced short-time collective diffusion coefficient (reducing factor is the Stokes-Einstein self-diffusion coefficient)
+    """
     gamma = cond_GT['gamma']
     return K_SPHS(phi, gamma)/S0_CS(phi)
 
 def Dc_short_div_D0_SPHS_2(phi, gamma):
+    """ The same as Dc_short_div_D0_SPHS except the arguments.
+    """
     return K_SPHS(phi, gamma)/S0_CS(phi)
 
 # Auxilary functions
 
 def Ds_div_D0_SPHS(phi, gamma):
+    """ Self-diffusion coefficient of solvent-permeable hard spheres.
+    """
     return 1 + lambda_t_SPHS(gamma)*phi*(1 + 0.12*phi - 0.70*phi**2)
 
 def lambda_t_SPHS(gamma):
@@ -98,7 +103,25 @@ def eta_inf_div_eta0_SPHS(phi, gamma):
     return 1 + 2.5*gamma**3*phi*(1 + Saito_fcn_SPHS(phi, gamma))*(1 - gamma**3 * phi * (1 + Saito_fcn_SPHS(phi, gamma)))
 
 
+# Here, the Saito function take up to the third order
+def Saito_fcn_HS_S3(phi):
+    """ Saito-type function: Third-order polynomial on phi (S3)
+    The expression is already reported by Riest et al. Soft Matter (2015) although their actual use with solvent-permeable hard sphere is based on the linear fit with phi (see Saito_fcn_SPHS function).
+    """
+    return phi*(1. + 0.95*phi - 2.15*phi**2.0)
+    # return phi*(1. + 0.95*phi - 2.15*phi**2.0)*(lambda_V_SPHS(gamma)/(2.5*gamma**3) - gamma**3)
+    # return phi*(lambda_V_SPHS(gamma)/(2.5*gamma**3) - gamma**3)
+
+
 def Saito_fcn_SPHS(phi, gamma):
+    """ Saito-type function: First-order polynomial on phi (S3)
+    The main reference is Riest et al. Soft Matter (2015).
+    It is based on the "first-order" polynomial fit for permeable hard spheres based on the simulation result reported by Abade et al. JCP (2012).
+    If we consider solvent-impermeable hard sphere case (i.e., gamma=1), the better polynomial fit is avaliable.
+    For such a normal hard sphere case, see Saito_fcn_HS_S3 function.
+    
+    Remark: In the case of a typical (solvent-impermeable) hard sphere dispersions, we would recommend the function "Saito_fcn_HS_S3".
+    """
     return phi*(lambda_V_SPHS(gamma)/(2.5*gamma**3) - gamma**3)
 
 
@@ -112,12 +135,15 @@ def Del_eta_noHI_div_eta0_SPHS(phi):
     
 
 def Gamma_S_SPHS(phi, gamma):
+    """ Generalized Stokes-Einstein function for self-diffusion coefficient of solvent-permeable hard spheres
+    """
     return Ds_div_D0_SPHS(phi, gamma)*eta_inf_div_eta0_SPHS(phi, gamma)
 
 
 
-
 def K_SPHS(phi, gamma):
+    """ Sedimentation coefficient of solvent-permeable hard spheres
+    """
     gp = gamma*phi
     return 1 + lambda_K_SPHS(gamma)*phi*(1 - 3.348*(gp) + 7.426*(gp)**2 - 10.034*(gp)**3 + 5.882*(gp)**4)
 
@@ -127,4 +153,6 @@ def lambda_K_SPHS(gamma):
 
 
 def S0_CS(phi):
+    """ Compressibility factor using Carnahan-Starling equation
+    """
     return (1-phi)**4/((1+2*phi)**2 + phi**3*(phi - 4))

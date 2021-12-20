@@ -1,3 +1,5 @@
+# Warning: Many parts of this post-processing code is outdated. 
+
 
 # import sys
 from analysis import *

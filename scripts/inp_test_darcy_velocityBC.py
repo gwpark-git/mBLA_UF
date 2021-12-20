@@ -34,21 +34,21 @@ L_channel = 0.5           # m          : Length of channel
                           # The required input for (2) is 'kappa_Darcy' and 'h_membrane' which is thickness of membrane
                           # In the case (2), it eventually calculate Lp, then there is no difference
 
-define_permeability = 'Lp'
-# kappa_Darcy = 1.3583e-16  # m^2 : Darcy's permeability of membrane
-# h_membrane = R_channel/2. # the reference thickness is half of channel-radius
+define_permeability = 'kappa_darcy'
+kappa_Darcy = 1.3583e-16  # m^2 : Darcy's permeability of membrane
+h_membrane = R_channel/2. # the reference thickness is half of channel-radius
                           # When darcy's permeability is given, Lp will be calculated in according to the membrane geometry
-Lp = 6.7e-10          # m/(Pa*sec) : Solvent-permeability of membrane
+                          # Lp = 6.7e-10          # m/(Pa*sec) : Solvent-permeability of membrane
                           # Parameters for numerical computation
 
-BC_inlet = 'pressure'
+BC_inlet = 'velocity'
                           # this can be either 'pressure' or 'velocity'
                           # the case 'pressure': P_in will be re-calculated based on the DLP and ref_Pout. Then u_ast will be set with u_HP
                           # the case 'velocity': u(0,0) will be specified based on u_ast value. Then, u_ast is replaced by the value itself.
                           # for 'pressure':
-DLP = 130                 # Pa         : Longitudinal pressure difference
+# DLP = 130                 # Pa         : Longitudinal pressure difference
                           # fore 'velocity':
-# u_inlet = 0.01625 # m/s: the reference value 
+u_inlet = 0.01625 # m/s: the reference value 
 ref_Pout = 101325         # Pa         : Outlet pressure
 
 BC_perm = 'DTP'  # either DTP or Pperm

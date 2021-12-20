@@ -2,15 +2,11 @@
 #   Main script for mBLA_UF code                                            #
 #                                                                           #
 #   Used in the paper:                                                      #
-#   Modeling cross-flow ultrafiltration of permeable particles dispersions  #
-#   Paper authors: Park, Gun Woo and Naegele, Gerhard                       #
+#   [1] Park and N{\"a}gele, JCP, 2020                                      #
 #   doi: 10.1063/5.0020986                                                  #
 #                                                                           #
-#   Used in the paper (to be submitted):                                    #
-#   (tentative title) Geometrical influence on particle transport in        #
-#   cross-flow ultrafiltration: cylindrical and flat sheet membranes        #
-#   Paper authors: Park, Gun Woo and Naegele, Gerhard                       #
-#   doi: TBD                                                                #
+#   [2] Park and N{\"a}gele, Membranes, 2021                                #
+#   doi: https://doi.org/10.3390/membranes11120960                          #
 #                                                                           #
 #                                                                           #
 #   Code Developer: Park, Gun Woo    (g.park@fz-juelich.de)                 #
@@ -51,25 +47,15 @@ from copy import deepcopy
 
 if __name__ == '__main__' :
     if len(sys.argv) == 1:
+        
         print ('Usage: ')
         print ('    argv[1] == input file as Python script')
         print ('    argv[2] == output file name')
         print ('               (note: iteration log will be stored in argv[2].log file)')
         print ('')
-        print ('Output:')
-        print ('    col 0: z                 in the unit of m')
-        print ('    col 1: phi_w(z)          in the dimensionless unit')
-        print ('    col 2: P(z)              in the unit of Pa')
-        print ('    col 3: v_w(z)            in the unit of m/sec')
-        print ('    col 4: u(r=0, z)         in the unit of m/sec')
-        print ('    col 5: Pi(phi_w(z))      in the unit of Pa')
-        print ('    col 6: P(z) - P_perm     in the unit of Pa')
-        print ('    col 7: v_w(z)/v^\ast     in the dimensionless unit')
-        print ('    col 8: u(r=0, z)/u^\ast  in the dimensionless unit')
-        print ('    col 9: Phi(z)            in the unit of m^3/sec')
-        print ('TEMP: col 10: Phi(z)/Q^\ast')
-        print ('TEMP: col 10: Phi_ex(z)/Q^\ast')
-        print ('TEMP: col 10: Phi_b(z)/Q^\ast')        
+        print ('Output: (..calling doc_string of analysis)')
+        format_docstring = aux_gen_analysis.__doc__.split('Parameters:')[0]
+        print (format_docstring)
     else:
         fn_inp = str(sys.argv[1]) # get filename for input script
         fn_out = str(sys.argv[2]) # get filename for output data
@@ -85,8 +71,6 @@ if __name__ == '__main__' :
         #      :This is due to internal history of the code, so it must be careful to check the units.
         #      :The revised code soon to be published.
 
-        # if (membrane_geometry == 'HF'):
-            
         
         z_arr = linspace(0, L_channel, Nz)                                 # discretized z
         z_div_L_arr = z_arr/L_channel
@@ -110,7 +94,7 @@ if __name__ == '__main__' :
             Lp = get_Lp_from_kappa_Darcy(membrane_geometry, kappa_Darcy, h_membrane, R_channel, eta0)
 
         else:
-            # this is normal situation, and Lp was directly given from input file
+            # When Lp is provided rather than mean Darcy permeability
             # even though h_membrane is not necessary to be defined in this case,
             # we will give as a reference value for it: h = R/2
             # this is due to the easier understand the pre_cond values below
@@ -130,7 +114,7 @@ if __name__ == '__main__' :
             u_ast = u_inlet
             DLP = get_DLP_from_uin(u_ast, lam1, eta0, R_channel, L_channel)
         elif BC_inlet == 'pressure':
-            u_ast = R_channel**2.0 * DLP/(lam1*eta0*L_channel) # u_ast = u_HP when pressure inlet BC is used
+            u_ast = R_channel**2.0 * DLP/(lam1*eta0*L_channel)                        # u_ast = u_HP when pressure inlet BC is used
             
         
         Pin_ast = PS.get_Pin_ast(DLP, ref_Pout)                                       # calculating Pin_ast for the given DLP and Pout
@@ -140,33 +124,33 @@ if __name__ == '__main__' :
             Pper = ref_Pperm
         else:
             print('BC_perm is set with DTP (or not-specified): this will use ref_DTP to determine Pperm. This has advantage when we want to compare BCP and BCu cases.')
-            Pper = PS.get_Pper(DLP, ref_DTP, k, ref_Pout)                         # calculating Pper for the given DLP, DTP_linear, k, and P_out
+            Pper = PS.get_Pper(DLP, ref_DTP, k, ref_Pout)                             # calculating Pper for the given DLP, DTP_linear, k, and P_out
 
         pre_cond = {'k':k, 'R':R_channel, 'L':L_channel, 'Lp':Lp, 'eta0':eta0, 'membrane_geometry':membrane_geometry, 'lam1':lam1, 'lam2':lam2, 'define_permeability':define_permeability, 'h':h_membrane, 'kappa_Darcy':kappa_Darcy, 'BC_inlet':BC_inlet, 'DLP':DLP, 'phi_freeze':phi_freeze, 'Nz':Nz}
-        cond_PS = PS.get_cond(pre_cond, Pin_ast, ref_Pout, Pper, u_ast)                  # allocating Blank Test (pure test) conditions
+        cond_PS = PS.get_cond(pre_cond, Pin_ast, ref_Pout, Pper, u_ast)               # allocating Blank Test (pure test) conditions
 
-        DTP_HP = (1/2.)*(Pin_ast + ref_Pout) - Pper                            # length-averaged TMP with a linearly declined pressure approximation
-        vw0 = cond_PS['Lp']*DTP_HP                                         # v^\ast
-        epsilon_d = D0/(cond_PS['R']*vw0)                                  # 1/Pe_R
+        DTP_HP = (1/2.)*(Pin_ast + ref_Pout) - Pper                                   # length-averaged TMP with a linearly declined pressure approximation
+        vw0 = cond_PS['Lp']*DTP_HP                                                    # v^\ast
+        epsilon_d = D0/(cond_PS['R']*vw0)                                             # 1/Pe_R
 
 
-        Pi_arr = zeros(size(phiw_arr))                                     # Set zero osmotic pressure
+        Pi_arr = zeros(size(phiw_arr))                                                # Set zero osmotic pressure
         Pi_div_DLP_arr = Pi_arr/cond_PS['DLP']
 
         Gk_tmp = CT.get_Gk(cond_PS['k'], dz_div_L, Pi_div_DLP_arr, CT.get_denom_Gk_BC_specific(cond_PS['k'], cond_PS['BC_inlet']))
-        cond_CT = CT.get_cond(cond_PS, phi_bulk, a_particle, a_H, Va, kT, dz, Gk_tmp)     # allocating conditions for the constant transport properties
-        cond_GT = GT.get_cond(cond_CT, Nr, weight) # allocating conditions for the general transport properties
+        cond_CT = CT.get_cond(cond_PS, phi_bulk, a_particle, a_H, Va, kT, dz, Gk_tmp) # allocating conditions for the constant transport properties
+        cond_GT = GT.get_cond(cond_CT, Nr, weight)                                    # allocating conditions for the general transport properties
 
-        phi_b= cond_GT['phi_bulk']                                         # set the feed/bulk concentration
-        phiw_div_phib_arr = phiw_arr/phi_b                                 # reduced wall concentration
-        phiw_set_1 = phiw_div_phib_arr                                     # reduced initial wall concentration
-        phiw_set_2 = deepcopy(phiw_set_1)                                  # reduced initial wall concentration
+        phi_b= cond_GT['phi_bulk']                                                    # set the feed/bulk concentration
+        phiw_div_phib_arr = phiw_arr/phi_b                                            # reduced wall concentration
+        phiw_set_1 = phiw_div_phib_arr                                                # reduced initial wall concentration
+        phiw_set_2 = deepcopy(phiw_set_1)                                             # reduced initial wall concentration
 
-        y_div_R_arr = GT.gen_y_div_R_arr(cond_GT)                          # generating tilde_y with given conditions described in cond_GT
+        y_div_R_arr = GT.gen_y_div_R_arr(cond_GT)                                     # generating tilde_y with given conditions described in cond_GT
         Ny = size(y_div_R_arr) 
 
-        gp_arr = zeros(Nz)                                                 # constructing array for g+(z) function
-        gm_arr = zeros(Nz)                                                 # constructing array for g-(z) function
+        gp_arr = zeros(Nz)                                                            # constructing array for g+(z) function
+        gm_arr = zeros(Nz)                                                            # constructing array for g-(z) function
 
         print_summary(cond_GT, f_log)
         print ('\nCalculating...(chi_A = norm(phiw_pre - phiw_new)/(Nz*phi_b))\n')
@@ -188,15 +172,6 @@ if __name__ == '__main__' :
 
         for n in range(N_iter):                                                           # main iterator with number n
             phiw_set_1 = deepcopy(phiw_set_2)                                             # reduced wall concentration inherited from the previous iteration
-            # if ((n+1)%10 == 0 and cond_GT['weight'] < 0.1):
-            #     tmp_weight = 2.*cond_GT['weight']
-            #     if (tmp_weight > 0.1):
-            #         tmp_weight = 0.1
-            #     print('the current weight = %4.3e will be updated to %4.3e\n'%(cond_GT['weight'], tmp_weight))
-            #     cond_GT['weight'] = tmp_weight    
-            #     # cond_GT['weight'] *= 2.
-            #     # if (cond_GT['weight']>0.1):
-            #     #     cond_GT['weight']==0.1
                     
             CT.gen_gpm_arr(sign_plus,  z_div_L_arr, Pi_div_DLP_arr, k, gp_arr)
             CT.gen_gpm_arr(sign_minus, z_div_L_arr, Pi_div_DLP_arr, k, gm_arr)
