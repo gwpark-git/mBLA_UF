@@ -1,9 +1,12 @@
 # mBLA_UF
-These scripts provide the calculation of matched asymptotic solution of the concentration-polarization layer in the cross-flow ultrafiltration proposed by Park and Naegele (JCP, 2020, https://doi.org/10.1063/5.0020986). The first version (v1.0) of this source code is also published on Zenodo with DOI number https://doi.org/10.5281/zenodo.3895786 . The third version (v3.0) used a manuscript to be submitted. The interlink will be added here when the manuscript is published.
+The modified boundary layer approximation (mBLA) of the concentration polarization layer in the cross-flow ultrafiltration proposed by Park and Naegele [1, 2]. The first version (v1.0) of this source code (used in [1]) is also published on Zenodo with DOI number https://doi.org/10.5281/zenodo.3895786 . The third version (specifically v3.1) used in [2] is published on Zenodo with DOI number https://doi.org/10.5281/zenodo.5658545 . The comments inside code explain related equations in Refs. [1, 2].
+
+[1] Park and Naegle, Journal of Chemical Physics, 2020 (https://doi.org/10.1063/5.0020986)
+[2] Park and Nagele, Membranes, 2021 (https://doi.org/10.3390/membranes11120960)
 
 # Version and environment
-## Version 3.0
-Now, we account the additional geometries composed of the flat sheet of membrane. The details of such studies will be explained soon when the manuscript is accepted.
+## Version 3.x
+Now, we account the additional geometries composed of the flat sheet of membrane. Many of cross-reference is added inside the code compared to the paper [1] and [2]. The proper definition is provided if the one is different from Ref. [2].
 
 ## Version 2.0
 With the major revision of code and adjusting the numerical methodology slightly for better readability and stability, now we launched version 2.0. This code is compatible with Python 3.8.x environment and requires Scipy, Numpy, and Matplotlib.
@@ -14,9 +17,14 @@ This is the original code used in the paper (Park and Naegele, JCP, 2020) with t
 
 
 # Usage
-"test_examples/run_test.sh" contains the basic test setup for computing semi-analytic solution of the model and reporting its result. The code can be directly used by the main function located in "scripts/cal_phiw_from_input.py". In the default folder, the basic test can be run by
-"python scripts/cal_phiw_from_input.py inp_ref.py test.dat"
-where inp_ref.py is the python script with pre-given system parameters, and test.dat is the output file once the computation is done. The aditional log file will be provided with the extension of .log. This log file contains a summary of conditions and logs of reports during iteration steps.
+Run the below code to see basic arguments and output:
+'''
+Python scripts/cal_phiw_from_input.py
+'''
 
-# Inter-link of codes with notations and equations in paper
-This is provided inside the help-doc or comments where the exact location of the equation in the manuscript. 
+The example is located at "test_example". Try to run below example inside "test_example" folder:
+'''
+python ../scripts/cal_phiw_from_input.py inp_v3.py inp_v3.py.dat
+'''
+
+
