@@ -140,8 +140,8 @@ def print_iteration_info(n, z_div_L_arr, phiw_set_1, phiw_set_2, cond_GT, Pi_div
 
     report_step[5] = length_average_f(z_div_L_arr, report_P_div_DLP_arr - cond_GT['Pper_div_DLP'], L_div_L, dz_div_L)*cond_GT['DLP']/cond_GT['DTP_HP']
     print('iter=%d, chi_A=%4.3e (weight = %4.3e)'%(report_step[0], chi_A, cond_GT['weight']))
-    print('\tz_max=%4.3f, phiw(z_max)=%.4f, phiw(L)=%.4f\n\t<Pi>/DTP_HP=%4.3e, DTP/DTP_HP=%4.3e'%(report_step[1], report_step[2], report_step[3], report_step[4], report_step[5]))
-    print('\tP(0)/Pin_ast=%4.3f, u(0,0)/u_ast=%4.3f\n'%(report_P_div_DLP_arr[0], (report_P_div_DLP_arr[0] - report_P_div_DLP_arr[1])/(z_div_L_arr[1] - z_div_L_arr[0])))
+    print('\tz_max=%4.3f, phiw(z_max)=%.4f, phiw(L)=%.4f\n\t<Pi>/DTP_HP=%4.4f, DTP/DTP_HP=%4.4f'%(report_step[1], report_step[2], report_step[3], report_step[4], report_step[5]))
+    print('\tP(0)/Pin_ast=%4.3f, u(0,0)/u_ast=%4.3f\n'%(report_P_div_DLP_arr[0]*cond_GT['DLP']/cond_GT['Pin_ast'], (report_P_div_DLP_arr[0] - report_P_div_DLP_arr[1])/(z_div_L_arr[1] - z_div_L_arr[0])))
     print()
     if not f_log.closed:
         if(n==0):
